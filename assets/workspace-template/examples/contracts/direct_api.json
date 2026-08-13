@@ -1,0 +1,31 @@
+{
+  "contract_version": "research-task-v1",
+  "task_id": "example_direct",
+  "objective": "Extract the user-codebook fields from the compact supplied document.",
+  "instructions_path": "inputs/instruction.md",
+  "codebook_path": "inputs/codebook.json",
+  "output_schema_path": "schemas/final_report.schema.json",
+  "input": {
+    "documents": ["inputs/documents/example.txt"],
+    "document_scope": "single_document",
+    "requires_external_search": false
+  },
+  "routing": {
+    "requested_route": "auto",
+    "coder_mode": "none"
+  },
+  "difficulty": {
+    "output_complexity": "simple",
+    "corpus_size": "small",
+    "noise": "low",
+    "identity_ambiguity": "low",
+    "multilingual": false,
+    "conflict_risk": "low"
+  },
+  "budgets": {
+    "max_search_calls": 0,
+    "max_runtime_seconds": 900,
+    "max_retries": 2
+  },
+  "metadata": {}
+}

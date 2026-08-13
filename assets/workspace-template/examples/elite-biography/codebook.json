@@ -1,0 +1,48 @@
+{
+  "full_name": "...",
+  "birth_date": "YYYY.MM.DD",
+  "gender": "Male/Female/Other",
+  "place_of_birth": "Province/State, City/County",
+  "education_attainment": "High school / Bachelor / Master / Doctorate / Other",
+  "party_experiences": [
+    {
+      "time_range": "YYYY.MM-YYYY.MM or YYYY.MM-Present",
+      "party_name": "...",
+      "position_title": "...",
+      "notes": "Use a separate entry for each distinct role and date range."
+    }
+  ],
+  "occupation_experiences": [
+    {
+      "time_range": "YYYY.MM-YYYY.MM",
+      "organization_name": "...",
+      "position_title": "...",
+      "concurrent": "Yes/No",
+      "organization_type": "Political / State / Private Sector / Liberal Professions / Third Sector / Unemployed / Other",
+      "notes": "..."
+    }
+  ],
+  "education_experiences": [
+    {
+      "time_range": "YYYY.MM-YYYY.MM",
+      "organization_name": "...",
+      "education_level": "High school / Bachelor / Master / Doctorate / Diploma / Certificate",
+      "enrollment_status": "Full-time / Part-time",
+      "major_or_field": "...",
+      "concurrent": "Yes/No",
+      "notes": "..."
+    }
+  ],
+  "relatives": [
+    {
+      "relation": "supported family relation",
+      "full_name": "...",
+      "notes": "..."
+    }
+  ],
+  "retired": "Yes/No",
+  "retirement_date": "YYYY.MM / Not applicable",
+  "deceased": "Yes/No",
+  "death_date": "YYYY.MM / Not deceased"
+}
+

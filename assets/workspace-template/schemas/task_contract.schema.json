@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ResearchTaskContract",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "task_id",
+    "objective",
+    "instructions_path",
+    "codebook_path",
+    "output_schema_path",
+    "input",
+    "routing",
+    "difficulty",
+    "budgets",
+    "metadata"
+  ],
+  "properties": {
+    "contract_version": {"type": "string"},
+    "task_id": {"type": "string", "minLength": 1},
+    "objective": {"type": "string", "minLength": 1},
+    "instructions_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Combined Markdown contract containing prose instructions and one or more ## Codebook fenced JSON objects."
+    },
+    "codebook_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Machine-extracted JSON mirror of the codebook embedded in instructions_path."
+    },
+    "output_schema_path": {"type": "string", "minLength": 1},
+    "input": {
+      "type": "object",
+      "required": ["documents", "document_scope", "requires_external_search"],
+      "properties": {
+        "documents": {"type": "array", "items": {"type": "string"}},
+        "inline_text": {"type": "string"},
+        "document_scope": {
+          "type": "string",
+          "enum": ["auto", "inline", "single_document", "fixed_collection", "open_web"]
+        },
+        "requires_external_search": {"type": ["boolean", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "routing": {
+      "type": "object",
+      "required": ["requested_route", "coder_mode"],
+      "properties": {
+        "requested_route": {
+          "type": "string",
+          "enum": ["auto", "direct_api", "local_agent", "online_agent"]
+        },
+        "coder_mode": {
+          "type": "string",
+          "enum": ["none", "api"],
+          "description": "Optional post-research coding. none is the default; api makes one configured model call after evidence freeze."
+        }
+      },
+      "additionalProperties": false
+    },
+    "difficulty": {
+      "type": "object",
+      "required": [
+        "output_complexity",
+        "corpus_size",
+        "noise",
+        "identity_ambiguity",
+        "multilingual",
+        "conflict_risk"
+      ],
+      "properties": {
+        "output_complexity": {"enum": ["simple", "moderate", "compound"]},
+        "corpus_size": {"enum": ["small", "medium", "large", "unknown"]},
+        "noise": {"enum": ["low", "medium", "high", "unknown"]},
+        "identity_ambiguity": {"enum": ["low", "medium", "high", "unknown"]},
+        "multilingual": {"type": "boolean"},
+        "conflict_risk": {"enum": ["low", "medium", "high", "unknown"]}
+      },
+      "additionalProperties": true
+    },
+    "budgets": {
+      "type": "object",
+      "required": ["max_search_calls", "max_runtime_seconds", "max_retries"],
+      "properties": {
+        "max_search_calls": {"type": "integer", "minimum": 0},
+        "max_runtime_seconds": {"type": "integer", "minimum": 1},
+        "max_retries": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": true
+    },
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RouteDecision",
+  "type": "object",
+  "required": [
+    "router_version",
+    "task_id",
+    "selected_route",
+    "workflow_prompt",
+    "difficulty_profile",
+    "coder_mode",
+    "permission_mode",
+    "factors",
+    "reasons",
+    "explicit_override",
+    "recommended_budgets"
+  ],
+  "properties": {
+    "router_version": {"type": "string"},
+    "task_id": {"type": "string"},
+    "selected_route": {"enum": ["direct_api", "local_agent", "online_agent"]},
+    "workflow_prompt": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "prompts/workflows/local_agent.md",
+        "prompts/workflows/online_agent.md"
+      ]
+    },
+    "difficulty_profile": {"enum": ["light", "standard", "intensive", "extreme"]},
+    "coder_mode": {"enum": ["none", "api"]},
+    "permission_mode": {"enum": ["none", "workspace-write", "danger-full-access"]},
+    "factors": {"type": "object"},
+    "reasons": {"type": "array", "items": {"type": "string"}},
+    "explicit_override": {"type": "boolean"},
+    "recommended_budgets": {"type": "object"}
+  },
+  "additionalProperties": false
+}

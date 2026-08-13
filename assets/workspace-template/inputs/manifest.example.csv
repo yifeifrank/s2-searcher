@@ -1,0 +1,4 @@
+task_id,objective,documents,document_scope,requires_external_search,output_complexity,corpus_size,noise,identity_ambiguity,multilingual,conflict_risk,route,coder_mode,max_search_calls,max_runtime_seconds
+example_direct,Extract the codebook fields from the supplied compact document,inputs/documents/example.txt,single_document,false,simple,small,low,low,false,low,auto,none,0,900
+example_local,Research the supplied fixed local collection and archive relevant evidence,inputs/documents/example.txt,fixed_collection,false,compound,large,high,low,false,medium,auto,none,0,1800
+example_online,Research the task objective from public web sources,,open_web,true,compound,unknown,high,medium,true,medium,auto,none,40,3600

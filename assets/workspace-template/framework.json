@@ -1,0 +1,27 @@
+{
+  "framework_version": "1.2.0",
+  "project_name": "__PROJECT_NAME__",
+  "runtime_support": "both",
+  "default_route": "auto",
+  "instructions_path": "inputs/instruction.md",
+  "codebook_path": "inputs/codebook.json",
+  "output_schema_path": "schemas/final_report.schema.json",
+  "coder_mode_default": "none",
+  "permissions": {
+    "codex_sandbox_mode": "workspace-write",
+    "codex_approval_policy": "never",
+    "online_agent": "workspace-write",
+    "network_access": true
+  },
+  "defaults": {
+    "max_search_calls": 40,
+    "max_parallel": 4,
+    "session_timeout_seconds": 3600,
+    "direct_api_timeout_seconds": 300,
+    "coder_api_timeout_seconds": 300,
+    "progress_interval_seconds": 10,
+    "api_failure_mode": "abort",
+    "api_max_input_characters": 500000,
+    "api_max_retries": 2
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "contract_version": "research-task-v1",
+  "task_id": "example_local",
+  "objective": "Extract the user-codebook fields from a fixed, noisy local collection.",
+  "instructions_path": "inputs/instruction.md",
+  "codebook_path": "inputs/codebook.json",
+  "output_schema_path": "schemas/final_report.schema.json",
+  "input": {
+    "documents": ["inputs/documents/example.txt"],
+    "document_scope": "fixed_collection",
+    "requires_external_search": false
+  },
+  "routing": {
+    "requested_route": "auto",
+    "coder_mode": "none"
+  },
+  "difficulty": {
+    "output_complexity": "compound",
+    "corpus_size": "large",
+    "noise": "high",
+    "identity_ambiguity": "low",
+    "multilingual": false,
+    "conflict_risk": "medium"
+  },
+  "budgets": {
+    "max_search_calls": 0,
+    "max_runtime_seconds": 1800,
+    "max_retries": 1
+  },
+  "metadata": {}
+}

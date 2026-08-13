@@ -1,0 +1,40 @@
+{
+  "router_version": "research-router-v5",
+  "task_id": "example_online",
+  "selected_route": "online_agent",
+  "workflow_prompt": "prompts/workflows/online_agent.md",
+  "difficulty_profile": "intensive",
+  "coder_mode": "none",
+  "permission_mode": "workspace-write",
+  "factors": {
+    "document_scope": "open_web",
+    "document_count": 0,
+    "requires_external_search": true,
+    "risk_score": 5,
+    "risk_factors": [
+      "output_complexity=compound (+1)",
+      "noise=high (+1)",
+      "identity_ambiguity=medium (+1)",
+      "conflict_risk=medium (+1)",
+      "multilingual=true (+1)"
+    ],
+    "output_complexity": "compound",
+    "corpus_size": "unknown",
+    "noise": "high",
+    "identity_ambiguity": "medium",
+    "multilingual": true,
+    "conflict_risk": "medium"
+  },
+  "reasons": [
+    "Selected online_agent because external search is required.",
+    "The standalone session owns the complete online research workflow.",
+    "No post-research coder is enabled; research artifacts are the terminal deliverable."
+  ],
+  "explicit_override": false,
+  "recommended_budgets": {
+    "max_search_calls": 40,
+    "max_runtime_seconds": 3600,
+    "max_retries": 2
+  }
+}
+

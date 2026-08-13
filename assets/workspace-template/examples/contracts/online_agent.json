@@ -1,0 +1,31 @@
+{
+  "contract_version": "research-task-v1",
+  "task_id": "example_online",
+  "objective": "Research the user-codebook fields from public web sources.",
+  "instructions_path": "inputs/instruction.md",
+  "codebook_path": "inputs/codebook.json",
+  "output_schema_path": "schemas/final_report.schema.json",
+  "input": {
+    "documents": [],
+    "document_scope": "open_web",
+    "requires_external_search": true
+  },
+  "routing": {
+    "requested_route": "auto",
+    "coder_mode": "none"
+  },
+  "difficulty": {
+    "output_complexity": "compound",
+    "corpus_size": "unknown",
+    "noise": "high",
+    "identity_ambiguity": "medium",
+    "multilingual": true,
+    "conflict_risk": "medium"
+  },
+  "budgets": {
+    "max_search_calls": 40,
+    "max_runtime_seconds": 3600,
+    "max_retries": 1
+  },
+  "metadata": {}
+}

@@ -1,0 +1,16 @@
+# Changelog
+
+All notable changes are documented here. This project follows semantic versioning after the initial preview.
+
+## [0.1.0] - 2026-08-12
+
+Initial friend-preview release.
+
+- Added direct API, standalone local-agent, and standalone online-agent routes.
+- Added auditable search, retrieval, caching, line-cited evidence archival, and validation.
+- Added resilient CSV/JSON batch execution with heartbeat, resume, retries, process-tree cleanup, quota/auth handling, and zero-child-agent auditing.
+- Added optional single-call API coding after evidence freeze.
+- Adopted generous, user-overridable online budgets.
+- Adopted least-privilege defaults and an explicit unsafe-isolation opt-in.
+- Added public documentation, CI, software citation metadata, and a validated offline example.
+- Identified Yifei Zhu as software author and linked the four-author arXiv preprint that describes the research framework.

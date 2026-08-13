@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "Please cite this software release when using the implementation. Cite the related arXiv preprint for the research framework."
+title: "Research Workspace Builder"
+type: software
+version: 0.1.0
+date-released: "2026-08-12"
+authors:
+  - family-names: "Zhu"
+    given-names: "Yifei"
+license: Apache-2.0
+abstract: "A skill and standalone task-pack generator for auditable local and online research with cached sources, line-cited evidence, validation, and resumable batch execution."
+keywords:
+  - research agents
+  - evidence provenance
+  - Codex
+  - Claude Code
+  - reproducible research
+preferred-citation:
+  type: article
+  title: "Agentic Framework for Political Biography Extraction"
+  authors:
+    - family-names: "Zhu"
+      given-names: "Yifei"
+    - family-names: "Yang"
+      given-names: "Songpo"
+    - family-names: "Zhu"
+      given-names: "Jiangnan"
+    - family-names: "Jiang"
+      given-names: "Junyan"
+  year: 2026
+  doi: "10.48550/arXiv.2603.18010"
+  url: "https://arxiv.org/abs/2603.18010"

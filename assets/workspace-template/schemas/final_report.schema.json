@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FinalReport",
+  "type": "object",
+  "required": [
+    "task_id",
+    "status",
+    "summary",
+    "execution_route",
+    "final_output",
+    "open_gaps",
+    "evidence_file"
+  ],
+  "properties": {
+    "task_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["complete", "needs_more_research", "failed"]},
+    "summary": {"type": "string"},
+    "execution_route": {"enum": ["direct_api", "local_agent", "online_agent"]},
+    "final_output": {"type": "object"},
+    "open_gaps": {"type": "array", "items": {"type": "string"}},
+    "evidence_file": {"type": "string"}
+  },
+  "additionalProperties": false
+}
+

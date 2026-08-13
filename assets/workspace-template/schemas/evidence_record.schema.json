@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EvidenceRecord",
+  "type": "object",
+  "required": ["cache_key", "start_line", "end_line", "archived_at"],
+  "properties": {
+    "cache_key": {"type": "string"},
+    "start_line": {"type": "integer", "minimum": 1},
+    "end_line": {"type": "integer", "minimum": 1},
+    "archived_at": {"type": "string"},
+    "url": {"type": "string"},
+    "source_path": {"type": "string"},
+    "title": {"type": "string"},
+    "labels": {"type": "array", "items": {"type": "string"}},
+    "facts": {"type": "object"},
+    "task_summary": {"type": "string"}
+  },
+  "additionalProperties": true
+}
+

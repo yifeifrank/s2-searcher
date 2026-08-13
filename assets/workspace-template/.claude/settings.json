@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "dontAsk",
+    "allow": [
+      "Bash(python tools/research_tools.py *)",
+      "Bash(python3 tools/research_tools.py *)",
+      "Bash(python tools/local_ingest.py *)",
+      "Bash(python3 tools/local_ingest.py *)",
+      "Bash(python validate.py *)",
+      "Bash(python3 validate.py *)",
+      "Bash(rg *)"
+    ],
+    "deny": [
+      "Agent",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "filesystem": {
+      "denyRead": ["~/"],
+      "allowRead": ["."]
+    },
+    "network": {
+      "allowedDomains": [
+        "google.serper.dev",
+        "api.exa.ai",
+        "api.firecrawl.dev",
+        "r.jina.ai",
+        "html.duckduckgo.com",
+        "www.bing.com"
+      ]
+    }
+  }
+}

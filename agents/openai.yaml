@@ -1,0 +1,7 @@
+interface:
+  display_name: "Research Workspace Builder"
+  short_description: "Scaffold auditable Codex/Claude research task packs"
+  default_prompt: "Create a standalone research task-pack from my combined Markdown instruction and embedded JSON codebook."
+
+policy:
+  allow_implicit_invocation: true
