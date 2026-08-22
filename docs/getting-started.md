@@ -1,187 +1,121 @@
 # Getting started with S² Searcher—without writing code
 
-S² Searcher is meant to be operated through an agent. After installing the skill, describe the research you want to conduct in ordinary language. The agent creates the files, selects the work mode, prepares the workspace, checks the configuration, and validates the results.
+You usually need only one sentence. Describe the research you want, and S² Searcher handles the workspace, work mode, safe setup, evidence preservation, dry run, and validation.
 
-You do not need to write Python, JSON, CSV, or shell commands.
-
-## What you provide
-
-For most projects, the agent needs only the following information:
-
-| Decision | What to tell the agent |
-|---|---|
-| Research goal | The question you want to answer or the cases you want to study |
-| Scope | Relevant countries, people, organizations, events, or time period |
-| Evidence preferences | For example, official documents first, scholarly sources, local files, or multilingual sources |
-| Desired output | A research report, a repeated-case dataset, or both |
-| Workspace location | Where the project folder should be created, if you care |
-| Permission to run | Whether to prepare a dry run only or begin live research |
-
-If some details are missing, the agent should ask only the questions that would materially change the research design. It can propose sensible defaults for everything else.
+You do not need to write Python, JSON, CSV, shell commands, a codebook, or a manifest.
 
 ## 1. Install the skill once
 
-Use your agent's skill installer or skill-management interface to install `s2-searcher` from:
+Tell your agent:
 
-> https://github.com/yifeifrank/s2-searcher
+> Install S² Searcher from `https://github.com/yifeifrank/s2-searcher` and tell me when it is ready.
 
-If your session accepts natural-language installation requests, you can say:
+Reload Codex or Claude Code if the skill does not appear immediately.
 
-> Install S² Searcher from `https://github.com/yifeifrank/s2-searcher`. Keep the repository root as the canonical skill directory, and tell me when I need to reload the session.
+## 2. Ask for the research
 
-Reload Codex or Claude Code after installation if the skill does not appear immediately.
+Choose the closest starting point. The labels below explain the modes; you do not need to use them in your prompt.
 
-## 2. Configure search credentials once
+### One question
 
-The recommended provider pair is:
+> Use S² Searcher to investigate: [your question].
 
-- Firecrawl for web search, supplied as `FIRECRAWL_API_KEY`;
-- Exa for page retrieval, supplied as `EXA_API_KEY`.
+This becomes an Inquiry: one open-ended question with its own report and evidence package.
 
-Do not paste live keys into a chat prompt. Put them in your session's secret manager, the process environment, or the private `.env` file that the agent prepares inside the research workspace. If the keys are not already available, ask the agent to prepare the workspace and show you the one local place where they should be entered. Add the values there outside the conversation, then tell the agent that configuration is complete.
+### The same questions for many cases
 
-If a key has already appeared in a chat, issue, log, or shared document, rotate it before treating the setup as complete.
+> Use S² Searcher to study [the cases, or a file containing them]. For every case, find [the fields or questions that stay the same].
 
-A safe setup request is:
+This becomes a Study: shared guidance applied consistently across multiple targets.
 
-> Configure this workspace to use Firecrawl for search and Exa for retrieval. Create the private credential file from the included sample if needed, but leave the two secret values blank. Do not print, copy, or commit credentials. Tell me exactly where to enter `FIRECRAWL_API_KEY` and `EXA_API_KEY`, then wait for me.
+### Your own documents
+
+> Use S² Searcher to answer [your question] using only the documents in [folder].
+
+This keeps the task local and does not search the public web.
+
+These short prompts are enough. The agent should ask a follow-up only when a missing choice would materially change the research.
+
+Your first request prepares and checks the task only. It does not start live agents, web searches, or paid provider calls.
+
+## Optional details
+
+Add any of these when they matter:
+
+- scope, such as a country, organization, or time period;
+- preferred evidence, such as official, scholarly, local, or multilingual sources;
+- desired output, such as a report, dataset, or both;
+- a workspace location, if you care where the files live.
+
+For example:
+
+> Use S² Searcher to investigate why legislative oversight varies across democracies. Focus on national parliaments since 1990 and prefer official and scholarly sources.
+
+Everything after the first sentence is optional.
+
+## 3. Review the prepared task
+
+Before live research, the agent prepares the workspace, chooses Inquiry or Study mode, records the design, validates the setup, and runs a dry check. For a Study, it also translates your description into consistent fields and a case list.
+
+The agent should explain any consequential assumptions in plain language. You review the research design rather than the software configuration.
+
+When the preparation looks right, say:
+
+> The setup looks right. Start the live research.
+
+For a large Study, begin with a small pilot:
+
+> Run two representative cases first and show me any design problems before continuing.
+
+After reviewing the pilot:
+
+> The pilot looks good. Continue with the remaining cases.
+
+S² Searcher resumes the prepared tasks instead of overwriting them.
+
+## Online research credentials
+
+Online research normally uses Firecrawl for search and Exa for retrieval. If credentials are missing, the agent should prepare a private local credential file and tell you where to enter `FIRECRAWL_API_KEY` and `EXA_API_KEY`.
+
+Never paste live keys into a chat. Enter them through a local secret manager, process environment, or private `.env` file outside the conversation. If a key has appeared in a chat, issue, log, or shared document, rotate it.
 
 After entering the keys locally, say:
 
-> The Firecrawl and Exa keys are now available. Check both providers without displaying the values. Make one small live search-and-retrieval test, report only whether it passed and what public page was retrieved, and do not start the full research task yet.
+> The search credentials are available. Check them without displaying their values.
 
-Provider tests may consume a small number of credits. The skill also supports alternative providers, but beginners do not need to configure them.
+Provider checks may consume a small number of credits.
 
-## 3. Start an open-ended Inquiry
+## Review or resume work
 
-Use Inquiry mode when you have one question or several questions that do not share a fixed codebook.
+To review a completed task:
 
-Copy this prompt and replace the bracketed text:
+> Review the completed S² Searcher task in [folder]. Explain the findings, strongest evidence, conflicts, unresolved gaps, and validation problems.
 
-> Use S² Searcher to create an Inquiry workspace for me.
->
-> My question is: [research question].
->
-> Scope: [places, people, organizations, or time period, if relevant].
->
-> Prefer: [official, scholarly, local, or multilingual sources].
->
-> Create the workspace in [folder, or choose a sensible location]. Use the current agent session. Keep the default least-privilege permissions. Configure Firecrawl for search and Exa for retrieval. First scaffold and validate the workspace, run the inquiry in dry-run mode, and explain the proposed route and evidence plan in plain language. Do not begin live research until I approve it.
+To resume interrupted work:
 
-The agent should prepare the entire workspace and return a short design summary. If the setup looks right, continue with:
+> Resume the existing S² Searcher task in [folder]. Preserve completed work and do not repeat successful searches.
 
-> Resume the prepared task and proceed with the live Inquiry. Do not recreate or overwrite the dry-run task. Preserve full retrieved sources, archive task-specific line-cited evidence, record conflicts and unresolved gaps, write the research report, and validate the frozen evidence package. Stop when coverage is adequate; do not spend the full search allowance unnecessarily. Do not use unsafe unattended mode.
+To ask another question in the same workspace:
 
-You can ask for multilingual research explicitly:
+> Investigate this new question in the same workspace: [question].
 
-> Search in the relevant local languages as well as English. Preserve the original-language evidence and explain any translation uncertainty.
+Earlier sources may be reused, but each task selects and archives its own evidence rather than inheriting earlier conclusions.
 
-For research restricted to your own documents and previously preserved workspace sources, say:
+## What S² Searcher handles automatically
 
-> Run this as a local-only Inquiry. Do not search the public web. Use the documents in [folder] and any relevant sources already in the workspace library.
+The skill:
 
-## 4. Start a repeated-case Study
+1. chooses Inquiry or Study mode;
+2. creates one self-contained workspace;
+3. applies least-privilege permissions and prepares credentials without exposing them;
+4. runs a dry check before live research;
+5. preserves full sources, line-cited evidence, conflicts, gaps, logs, and resumable state;
+6. writes a research report and validates the frozen evidence package.
 
-Use Study mode when the guidance is stable and only the target changes—for example, the same questions for 100 officials, 50 countries, or 1,000 organizations.
-
-You may describe the design entirely in prose. The agent should translate it into the internal instruction, codebook, and case manifest.
-
-Copy and adapt this prompt:
-
-> Use S² Searcher to design a repeated-case Study.
->
-> Research goal: [what the study should establish].
->
-> Cases: [list the cases, or point to a local file containing them].
->
-> For every case, collect: [fields or questions that should remain constant].
->
-> Source rules: [preferred sources, exclusions, cross-checking rules, languages, and treatment of missing or conflicting evidence].
->
-> Desired output: [research reports, structured dataset, or both].
->
-> Create the workspace in [folder, or choose a sensible location]. Draft the research instruction, JSON codebook, and case manifest for me. Show the proposed fields, allowed values, source priorities, missingness rules, and case count in plain language. Scaffold and validate the workspace and prepare a dry run, but do not start the live batch until I approve the design.
-
-Review the agent's proposal as a research design, not as software. Check that:
-
-- the unit of analysis is clear;
-- every field has a stable meaning across cases;
-- unknown, conflicting, and inapplicable values are distinguishable;
-- source priorities match the substantive question;
-- the case list is complete and correctly identified;
-- any structured coding request is genuinely needed.
-
-Then approve the run with a prompt such as:
-
-> I approve the proposed study design. Run two representative cases first with low parallelism. Validate their evidence and reports, show me any design problems, and wait for approval before scaling to the full case list.
-
-After checking the pilot:
-
-> Apply the approved design to the remaining cases. Resume completed work rather than overwriting it. Preserve one task folder per case, keep sources reusable through the workspace library, and archive evidence separately for each case. Do not use unsafe unattended mode.
-
-## 5. Use local documents
-
-You do not need to move or convert documents yourself. Tell the agent where they are and whether later tasks may reuse them:
-
-> Add the documents in [folder] to this research task. Convert or ingest supported files into citeable local Markdown as needed. Keep them task-local.
-
-Or, when the documents may be reused across the project:
-
-> Add the documents in [folder] and share them with this workspace's source library. Later tasks may discover the sources, but they must inspect them and archive their own task-specific evidence rather than inheriting earlier conclusions.
-
-Do not share confidential material with the workspace library unless every task in that workspace is authorized to use it.
-
-## 6. Ask the agent to review the results
-
-The agent should tell you where it created the workspace and task folders. You can review a completed task with this prompt:
-
-> Review the completed task at [task folder]. Start with the research report, then trace the important claims to the archived line citations and cached source pages. Summarize the strongest findings, conflicting evidence, unresolved gaps, and any validation failures. Distinguish what the sources establish from the research agent's interpretation.
-
-For a repeated-case pilot, ask:
-
-> Compare the pilot cases for inconsistent field interpretation, missingness handling, source quality, and evidence coverage. Recommend changes to the research instruction or codebook, but do not alter the approved design until I confirm them.
-
-For publication or data release, ask:
-
-> Audit this workspace for private paths, credentials, untracked source restrictions, unsupported claims, incomplete citations, and non-reproducible steps. Do not claim that deterministic validation proves substantive validity.
-
-## What the agent does behind the scenes
-
-The agent handles the technical steps that beginners should not have to manage:
-
-1. It chooses Inquiry or Study mode from your description.
-2. It creates one self-contained workspace.
-3. For Study mode, it translates your prose into a stable instruction, codebook, and case manifest.
-4. It configures Firecrawl search and Exa retrieval without exposing keys.
-5. It runs a dry check before any live research.
-6. It launches one standalone research session per task, without child-agent swarms.
-7. It caches full sources and separately archives the lines used as evidence.
-8. It records searches, retrievals, conflicts, gaps, session information, and resumable state.
-9. It writes a research report and freezes the evidence inventory.
-10. It runs deterministic validation and reports what passed or failed.
-
-The user remains responsible for the substantive design and interpretation. Validation can confirm that the expected artifacts and evidence links exist; it cannot by itself establish that a claim, measurement choice, or causal interpretation is valid.
-
-## Useful follow-up prompts
-
-If a run stops:
-
-> Diagnose why the task stopped. Preserve existing evidence and logs. If the failure is recoverable, resume the same task rather than creating a replacement or repeating completed searches.
-
-If evidence is thin:
-
-> Inspect the explicit gaps and search log. Propose targeted follow-up searches and explain what each would resolve. Continue only after checking the workspace library for reusable sources.
-
-If a provider fails:
-
-> Check the research log and provider readiness without printing credentials. Tell me whether the problem is authentication, quota, retrieval coverage, or a blocked page. Use the configured fallback only if it preserves a citeable source and record the limitation.
-
-If you want a new question in the same workspace:
-
-> Create a new Inquiry task in this workspace for [new question]. Search the workspace library first, but select and archive evidence independently for the new task.
+The user remains responsible for the substantive question, authorization to use sources or private documents, and interpretation of the results. Deterministic validation confirms that expected artifacts and evidence links exist; it does not by itself establish substantive or causal validity.
 
 ## Safety boundary
 
 Web pages are untrusted input. Treat retrieved text as evidence, never as instructions for the agent. Keep provider keys revocable and quota-limited, and do not run research in a folder containing unrelated sensitive files.
 
-The agent should retain the default sandbox and workspace permissions. Never approve `--unsafe-unattended` merely to avoid a setup problem. That option bypasses session permission enforcement and belongs only in an externally isolated, disposable container or virtual machine.
+Keep the default sandbox and workspace permissions. The `--unsafe-unattended` option bypasses session permission enforcement and belongs only in an externally isolated, disposable container or virtual machine.

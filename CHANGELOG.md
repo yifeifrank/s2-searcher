@@ -4,6 +4,8 @@ All notable changes are documented here. This project follows semantic versionin
 
 ## [Unreleased]
 
+- Simplified beginner prompts so users provide only the research question, cases, and materially relevant preferences; built-in preparation, safety, evidence, and validation requirements now remain implicit.
+- Clarified that an initial research request authorizes preparation and a dry run only; live agents, searches, and provider calls require separate explicit approval.
 - Renamed Research Workspace Builder to S² Searcher, including the canonical repository, skill ID, installation paths, and deterministic release archive.
 - Added Inquiry mode as a single-question entry point over the existing standalone task engine; the current manifest path is documented as Study mode.
 - Exposed `tasks/_global_cache/` as a searchable workspace source library and added opt-in sharing for ingested local documents.

@@ -1,7 +1,7 @@
 interface:
   display_name: "S² Searcher"
   short_description: "Preserve evidence from questions or repeated studies"
-  default_prompt: "Use $s2-searcher to turn my question or repeated-case study description into an auditable workspace and handle setup, dry-run validation, and evidence preservation for me."
+  default_prompt: "Use $s2-searcher to investigate my question or repeated-case study and preserve the evidence in a reusable research workspace."
 
 policy:
   allow_implicit_invocation: true

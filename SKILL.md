@@ -25,9 +25,13 @@ Every generated workspace retains both entry points. `--inquiry` only supplies a
 
 Accept a beginner's ordinary-language research description as sufficient input. Carry out scaffolding, file creation, provider selection, dry runs, and validation instead of returning terminal instructions for the user to execute.
 
+Do not make users repeat built-in requirements for safe permissions, dry-run preparation, evidence preservation, resumability, or validation. Apply those defaults automatically. A short request such as “Use S² Searcher to investigate this question” is sufficient for Inquiry mode; a request that supplies multiple targets and shared fields is sufficient for Study mode.
+
 For Inquiry mode, turn the user's question and scope into the existing one-question entry point. For Study mode, draft the combined Markdown instruction, embedded JSON codebook, and CSV or JSON manifest from the user's prose. Summarize the proposed unit of analysis, fields, allowed values, missingness rules, source priorities, and case count for substantive approval before a live batch.
 
-Ask only for missing choices that would materially change the result. Infer the current session when possible and choose a sensible workspace location when the user has no preference. Run a dry check before live research. When the user approves the prepared task, resume that same task for the live run instead of recreating or overwriting it. Launch live model or provider calls only when the user authorizes an operational run.
+Ask only for missing choices that would materially change the result. Infer the current session when possible and choose a sensible workspace location when the user has no preference. Run a dry check before live research.
+
+A user's initial research request authorizes preparation and dry-run validation only. Words such as “investigate,” “research,” “search,” or “study” in that request do not authorize live agent, provider, paid API, or web-search calls. After presenting the prepared task and consequential assumptions, require a distinct, explicit approval to start live research. Then resume that same task instead of recreating or overwriting it.
 
 Never ask a user to paste provider keys into a chat prompt. Configure Firecrawl search with Exa fallback and Exa retrieval with Firecrawl fallback by default; do not add direct HTTP as a default because Claude's network allow-list does not permit arbitrary destination domains. Create credential placeholders when needed, and tell the user where to provision `FIRECRAWL_API_KEY` and `EXA_API_KEY` through a local secret mechanism. Check availability without printing, logging, or copying credential values.
 
@@ -157,32 +161,15 @@ Read [prompt-preservation.md](references/prompt-preservation.md) before modifyin
 
 ## Verification
 
-After scaffolding:
+For an ordinary user task, verify only the prepared path:
 
 1. Run `python3 validate.py project` from the generated folder.
-2. Run `python3 router.py --contract examples/contracts/direct_api.json --stdout`.
-3. Run `python3 router.py --contract examples/contracts/local_agent.json --stdout`.
-4. Run `python3 router.py --contract examples/contracts/online_agent.json --stdout`.
-5. Run a dry batch without model or search calls:
+2. For Inquiry mode, run the user's prepared inquiry once with `--dry-run`.
+3. For Study mode, run the user's prepared manifest once with `batch.py --dry-run`.
 
-   ```bash
-   python3 batch.py \
-     --manifest inputs/manifest.example.csv \
-     --runtime codex \
-     --tasks-dir tasks/dry_run \
-     --dry-run
-   ```
+Do not run unrelated example routes or both work modes during ordinary task preparation. Those checks belong to package development and release validation. When modifying or releasing S² Searcher itself, run `python3 scripts/release_check.py` from the skill repository; it covers project validation, every route, Study and Inquiry dry runs, tests, scans, and deterministic packaging.
 
-6. Run an Inquiry dry run without model or search calls:
-
-   ```bash
-   python3 inquiry.py "How does existing evidence bear on this question?" \
-     --runtime codex \
-     --task-id inquiry-check \
-     --dry-run
-   ```
-
-Do not launch live API, Codex, Claude, or web-search work unless the user asks for an operational run.
+Do not launch live API, Codex, Claude, provider, or web-search work without a separate explicit approval after preparation.
 
 ## Handoff
 

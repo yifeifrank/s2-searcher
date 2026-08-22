@@ -60,7 +60,7 @@ python3 -m pip install -r assets/workspace-template/requirements.txt
 
 Ask your agent to install the skill from its canonical repository:
 
-> Install S² Searcher from `https://github.com/yifeifrank/s2-searcher`, keep the repository root as the canonical skill directory, and tell me when I need to reload the session.
+> Install S² Searcher from `https://github.com/yifeifrank/s2-searcher` and tell me when it is ready.
 
 For a manual installation, clone this repository and copy or symlink its root into your agent's skill directory:
 
@@ -76,9 +76,13 @@ For Claude Code, install the same directory under `~/.claude/skills/s2-searcher`
 
 After installing the skill, a beginner can ask an agent:
 
-> Use S² Searcher to create an Inquiry workspace for this question: What explains variation in legislative oversight across democracies? Use Firecrawl for search and Exa for retrieval, preserve full sources and line-cited evidence, keep safe permissions, and run a dry check before asking me to approve live research.
+> Use S² Searcher to investigate why legislative oversight varies across democracies.
 
-For a repeated-case project, describe the research goal, cases, fields, and source rules in prose. The agent should draft the instruction, codebook, and manifest, explain them in plain language, and wait for approval before a live batch. The [no-code getting-started guide](docs/getting-started.md) provides copyable prompts for Inquiry, Study, local documents, pilots, review, and resumption.
+For a repeated-case project:
+
+> Use S² Searcher to study the officials listed in `officials.csv`. For each official, find their education, career history, and party affiliation.
+
+That is enough to begin preparation. The skill chooses the work mode, creates the workspace, applies its safety and evidence defaults, runs a dry check, and stops for explicit approval before live research. The [no-code getting-started guide](docs/getting-started.md) provides similarly short prompts for local documents, pilots, review, and resumption.
 
 ## Manual CLI example
 
