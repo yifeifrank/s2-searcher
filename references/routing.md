@@ -14,7 +14,9 @@ Use for a fixed collection that benefits from iterative file discovery and close
 
 ### `online_agent`
 
-Use when sources may need to be discovered externally. One standalone session owns planning, workspace-library lookup, gap tracking, web search, retrieval, archival, the research report, and evidence freeze. It materializes reusable sources into its task cache so audit logs and evidence remain task-local. It does not launch child agents.
+Use when sources may need to be discovered externally. One standalone session owns planning, workspace-library lookup, gap tracking, search strategy, source judgment, corroboration, reconciliation, and the research report. It does not launch child agents.
+
+The route has two acquisition modes rather than two research architectures. Codex-native mode uses native web search and makes the launcher preserve observable search events, cited URLs, and optional background snapshots after the turn. Provider mode uses explicit search and retrieval services, materializes reusable sources, and archives exact line-addressable evidence. The runtime search mode specializes the authoritative workflow prompt after routing; it does not add a fourth route.
 
 Both agent routes default to `coder_mode=none`. When explicitly enabled, `coder_mode=api` makes one post-freeze API call outside the agent session.
 

@@ -17,6 +17,7 @@ import sys
 import time
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 from router import route_contract
 
@@ -28,6 +29,10 @@ TERMINAL_STATUSES = {
     "pass", "fail", "timeout", "skipped", "aborted", "resumed", "dry-run"
 }
 WRITE_RETRY_DELAYS = (0.25, 1.0, 3.0, 5.0)
+CODEX_NATIVE_WORKFLOW = "prompts/workflows/online_agent_codex_native.md"
+NATIVE_CAPTURE_VERSION = "codex-native-search-v1"
+URL_RE = re.compile(r"https?://[^\s<>\]\[\"']+", re.IGNORECASE)
+MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^\s)]+)\)", re.IGNORECASE)
 
 API_WARNING_PATTERNS: list[tuple[str, str]] = [
     (
@@ -122,6 +127,11 @@ def atomic_json(path: Path, value: Any) -> None:
 
 async def atomic_json_async(path: Path, value: Any) -> None:
     await asyncio.to_thread(atomic_json, path, value)
+
+
+def write_ndjson(path: Path, rows: list[dict[str, Any]]) -> None:
+    text = "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows)
+    write_text(path, text)
 
 
 # ---------------------------------------------------------------------------
@@ -253,8 +263,40 @@ def setup_task(task_root: Path, contract: dict[str, Any], decision: dict[str, An
             write_text(path, "")
 
 
+def apply_runtime_search_mode(
+    decision: dict[str, Any], runtime: str, codex_search_mode: str,
+) -> dict[str, Any]:
+    """Select the acquisition prompt without changing the router's research method."""
+    if (
+        decision.get("selected_route") == "online_agent"
+        and runtime == "codex"
+        and codex_search_mode == "native"
+    ):
+        decision["workflow_prompt"] = CODEX_NATIVE_WORKFLOW
+        reasons = decision.setdefault("reasons", [])
+        marker = (
+            "Codex native search selected; the launcher will capture observable "
+            "search metadata and source URLs automatically."
+        )
+        if marker not in reasons:
+            reasons.append(marker)
+    return decision
+
+
 def render_prompt(task_root: Path, decision: dict[str, Any]) -> str:
     workflow = decision.get("workflow_prompt") or "none (direct_api owns execution)"
+    native_capture = workflow == CODEX_NATIVE_WORKFLOW
+    completion = (
+        "Finish the agent stage only after `research_report.md` and the semantic research "
+        "artifacts exist. Do not run the research validator: after this Codex turn exits, "
+        "the S² launcher will automatically capture native-search metadata, take configured "
+        "source snapshots, finalize mechanical worklog fields, and run validation."
+        if native_capture
+        else (
+            "Finish the agent stage only after `research_report.md` exists and "
+            f"`python3 validate.py research --task-root {task_root.as_posix()}` succeeds."
+        )
+    )
     return f"""Execute exactly one research task from the generated framework.
 
 Framework root: {FRAMEWORK_ROOT.as_posix()}
@@ -267,7 +309,7 @@ Read AGENTS.md or CLAUDE.md, task_instruction.md, the task contract, route decis
 
 For `local_agent` and `online_agent`, this standalone session is the complete research agent and must not spawn a child. Never launch a coder child: when `coder_mode=api`, the batch launcher owns that later API call.
 
-Finish the agent stage only after `research_report.md` exists and `python3 validate.py research --task-root {task_root.as_posix()}` succeeds. Do not create `output/final_report.json`; the launcher creates it only for `direct_api` or `coder_mode=api`.
+{completion} Do not create `output/final_report.json`; the launcher creates it only for `direct_api` or `coder_mode=api`.
 """
 
 
@@ -318,6 +360,7 @@ def claude_prefix() -> list[str]:
 def codex_command(
     model: str, task_root: Path, session_ref: str = "",
     ignore_user_config: bool = False, unsafe_unattended: bool = False,
+    native_search: bool = False,
 ) -> list[str]:
     permissions = (
         ["--dangerously-bypass-approvals-and-sandbox"]
@@ -332,9 +375,10 @@ def codex_command(
         common.append("--ignore-user-config")
     if model:
         common.extend(["-m", model])
+    prefix = codex_prefix() + (["--search"] if native_search else [])
     if session_ref:
-        return codex_prefix() + [*permissions, "exec", "resume", *common, session_ref, "-"]
-    return codex_prefix() + [
+        return prefix + [*permissions, "exec", "resume", *common, session_ref, "-"]
+    return prefix + [
         *permissions, "exec", "--color", "never", *common,
         "-C", str(FRAMEWORK_ROOT), "-"
     ]
@@ -454,6 +498,264 @@ async def run_process(
     finally:
         await registry.discard(process)
     return int(process.returncode if process.returncode is not None else -9), output or b"", timed_out
+
+
+# ---------------------------------------------------------------------------
+# Codex-native search capture and background source snapshots
+# ---------------------------------------------------------------------------
+
+def _clean_native_url(value: str) -> str:
+    candidate = value.strip().rstrip(".,;:!?)]}")
+    try:
+        parsed = urlsplit(candidate)
+    except ValueError:
+        return ""
+    scheme = parsed.scheme.lower()
+    host = parsed.netloc.lower()
+    if scheme not in {"http", "https"} or not host:
+        return ""
+    return urlunsplit((scheme, host, parsed.path or "/", parsed.query, ""))
+
+
+def _urls_in_value(value: Any) -> set[str]:
+    urls: set[str] = set()
+    if isinstance(value, str):
+        for match in URL_RE.findall(value):
+            cleaned = _clean_native_url(match)
+            if cleaned:
+                urls.add(cleaned)
+    elif isinstance(value, dict):
+        for child in value.values():
+            urls.update(_urls_in_value(child))
+    elif isinstance(value, list):
+        for child in value:
+            urls.update(_urls_in_value(child))
+    return urls
+
+
+def _titles_in_text(text: str) -> dict[str, str]:
+    titles: dict[str, str] = {}
+    for title, raw_url in MARKDOWN_LINK_RE.findall(text):
+        cleaned = _clean_native_url(raw_url)
+        compact = _short_line(title, 240)
+        if cleaned and compact:
+            titles.setdefault(cleaned, compact)
+    return titles
+
+
+def extract_codex_native_archive(
+    output: bytes | None, report_text: str = "",
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Extract only what Codex exposes in JSONL; hidden search results are not inferred."""
+    searches: list[dict[str, Any]] = []
+    sources: dict[str, dict[str, Any]] = {}
+    titles: dict[str, str] = {}
+
+    def observe(url: str, origin: str, event_id: str = "") -> None:
+        row = sources.setdefault(
+            url,
+            {
+                "capture_version": NATIVE_CAPTURE_VERSION,
+                "url": url,
+                "title": "",
+                "observed_in": [],
+                "search_event_ids": [],
+                "used_in_report": False,
+                "snapshot": {"status": "not_requested"},
+            },
+        )
+        if origin not in row["observed_in"]:
+            row["observed_in"].append(origin)
+        if event_id and event_id not in row["search_event_ids"]:
+            row["search_event_ids"].append(event_id)
+
+    decoded = output.decode("utf-8", errors="replace") if output else ""
+    for line_number, raw in enumerate(decoded.splitlines(), 1):
+        try:
+            event = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            continue
+        if not isinstance(event, dict) or event.get("type") != "item.completed":
+            continue
+        item = event.get("item")
+        if not isinstance(item, dict):
+            continue
+        item_type = str(item.get("type", ""))
+        event_id = str(item.get("id") or f"line-{line_number}")
+        if item_type == "web_search":
+            action = item.get("action") if isinstance(item.get("action"), dict) else {}
+            action_name = str(action.get("type") or item.get("action_type") or "other")
+            query_value = (
+                action.get("queries")
+                or item.get("queries")
+                or action.get("query")
+                or item.get("query")
+                or ""
+            )
+            query = (
+                " | ".join(str(part) for part in query_value)
+                if isinstance(query_value, list)
+                else str(query_value)
+            )
+            if action_name == "other" and _clean_native_url(str(item.get("query", ""))):
+                action_name = "open_page"
+            elif action_name not in {"search", "open_page", "find_in_page", "other"}:
+                action_name = "other"
+            event_urls = sorted(_urls_in_value(item))
+            searches.append(
+                {
+                    "capture_version": NATIVE_CAPTURE_VERSION,
+                    "event_id": event_id,
+                    "action": action_name,
+                    "query": query,
+                    "urls": event_urls,
+                }
+            )
+            for url in event_urls:
+                observe(url, "native_search_event", event_id)
+        elif item_type == "agent_message":
+            text = str(item.get("text", ""))
+            titles.update({key: value for key, value in _titles_in_text(text).items() if key not in titles})
+            for url in sorted(_urls_in_value(text)):
+                observe(url, "agent_message")
+
+    titles.update({key: value for key, value in _titles_in_text(report_text).items() if key not in titles})
+    report_urls = sorted(_urls_in_value(report_text))
+    for url in report_urls:
+        observe(url, "research_report")
+        sources[url]["used_in_report"] = True
+
+    for url, title in titles.items():
+        if url in sources:
+            sources[url]["title"] = title
+    for row in sources.values():
+        row["observed_in"].sort()
+        row["search_event_ids"].sort()
+    return searches, [sources[url] for url in sorted(sources)]
+
+
+class NativeSnapshotCoordinator:
+    """Share conservative anonymous-Jina pacing across concurrently running tasks."""
+
+    def __init__(self) -> None:
+        self.semaphore = asyncio.Semaphore(2)
+        self.rate_lock = asyncio.Lock()
+        self.next_jina_start = 0.0
+
+    async def _wait_for_backend(self, backend: str) -> None:
+        if backend != "jina":
+            return
+        interval = 0.13 if os.getenv("JINA_API_KEY", "").strip() else 3.05
+        async with self.rate_lock:
+            loop = asyncio.get_running_loop()
+            delay = max(0.0, self.next_jina_start - loop.time())
+            if delay:
+                await asyncio.sleep(delay)
+            self.next_jina_start = asyncio.get_running_loop().time() + interval
+
+    async def retrieve(
+        self, task_root: Path, url: str, backend: str, timeout: int,
+        registry: ProcessRegistry,
+    ) -> dict[str, Any]:
+        async with self.semaphore:
+            await self._wait_for_backend(backend)
+            command = [
+                sys.executable,
+                str(FRAMEWORK_ROOT / "tools" / "research_tools.py"),
+                "--task-root", str(task_root),
+                "retrieve", "--url", url, "--backend", backend,
+                "--timeout", str(timeout), "--fallbacks", "",
+                "--log-context", "native_snapshot",
+            ]
+            returncode, output, timed_out = await run_process(
+                command, None, float(timeout + 15), registry
+            )
+        if returncode == 0 and not timed_out:
+            for raw in reversed(output.decode("utf-8", errors="replace").splitlines()):
+                try:
+                    payload = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(payload, dict) and payload.get("status") == "success":
+                    return {
+                        "status": "success",
+                        "backend": str(payload.get("backend", backend)),
+                        "canonical_url": str(payload.get("canonical_url", url)),
+                        "cache_key": str(payload.get("cache_key", "")),
+                        "markdown_path": str(payload.get("markdown_path", "")),
+                        "cache_hit": bool(payload.get("cache_hit", False)),
+                    }
+        return {
+            "status": "error",
+            "backend": backend,
+            "message": _short_line(output.decode("utf-8", errors="replace"), 500)
+            or ("retrieval timed out" if timed_out else f"retrieval exited {returncode}"),
+        }
+
+
+async def finalize_codex_native_archive(
+    task_root: Path, output: bytes, archive_mode: str, backend: str, timeout: int,
+    snapshots: NativeSnapshotCoordinator, registry: ProcessRegistry,
+) -> None:
+    report_path = task_root / "research_report.md"
+    report_text = (
+        report_path.read_text(encoding="utf-8-sig", errors="replace")
+        if report_path.is_file()
+        else ""
+    )
+    searches, sources = extract_codex_native_archive(output, report_text)
+    previous: dict[str, dict[str, Any]] = {}
+    sources_path = task_root / "cache" / "native_sources.ndjson"
+    if sources_path.is_file():
+        for raw in sources_path.read_text(encoding="utf-8-sig", errors="replace").splitlines():
+            try:
+                row = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, dict) and isinstance(row.get("snapshot"), dict):
+                previous[str(row.get("url", ""))] = row["snapshot"]
+    if archive_mode == "snapshot":
+        for row in sources:
+            old = previous.get(str(row["url"]), {})
+            if old.get("status") == "success":
+                row["snapshot"] = old
+            else:
+                row["snapshot"] = await snapshots.retrieve(
+                    task_root, str(row["url"]), backend, timeout, registry
+                )
+    write_ndjson(task_root / "cache" / "native_searches.ndjson", searches)
+    write_ndjson(sources_path, sources)
+
+    worklog_path = task_root / "searcher_worklog.json"
+    if worklog_path.is_file():
+        try:
+            worklog = json.loads(worklog_path.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            worklog = None
+        if isinstance(worklog, dict):
+            pages = sorted(
+                path.relative_to(task_root).as_posix()
+                for path in (task_root / "cache" / "pages").glob("*.md")
+            )
+            evidence_path = task_root / "evidence.ndjson"
+            evidence_count = (
+                sum(bool(line.strip()) for line in evidence_path.read_text(
+                    encoding="utf-8-sig", errors="replace"
+                ).splitlines())
+                if evidence_path.is_file()
+                else 0
+            )
+            worklog.update(
+                {
+                    "search_capture_mode": "codex_native",
+                    "search_call_count": sum(row.get("action") == "search" for row in searches),
+                    "native_source_count": len(sources),
+                    "frozen_pages": pages,
+                    "frozen_page_count": len(pages),
+                    "evidence_count": evidence_count,
+                }
+            )
+            atomic_json(worklog_path, worklog)
 
 
 # ---------------------------------------------------------------------------
@@ -700,6 +1002,7 @@ def extract_research_tool_warnings(task_root: Path, start_line: int = 0) -> dict
             "research_tool_failure_categories": [],
             "research_tool_warnings": [{"category": "research_log_read_error", "message": str(exc)}],
         }
+    events: list[dict[str, Any]] = []
     for raw in lines:
         if not raw.strip():
             continue
@@ -707,7 +1010,25 @@ def extract_research_tool_warnings(task_root: Path, start_line: int = 0) -> dict
             event = json.loads(raw)
         except json.JSONDecodeError:
             continue
-        if not isinstance(event, dict) or str(event.get("status", "")).lower() not in {"error", "failed", "fail", "timeout"}:
+        if not isinstance(event, dict) or event.get("context") == "native_snapshot":
+            continue
+        events.append(event)
+    recovered = {
+        (
+            str(event.get("action", "")),
+            str(event.get("query") or event.get("url") or ""),
+        )
+        for event in events
+        if str(event.get("status", "")).lower() == "success"
+    }
+    for event in events:
+        if str(event.get("status", "")).lower() not in {"error", "failed", "fail", "timeout"}:
+            continue
+        operation = (
+            str(event.get("action", "")),
+            str(event.get("query") or event.get("url") or ""),
+        )
+        if operation in recovered:
             continue
         message = " | ".join(
             str(event.get(key, "")).strip()
@@ -721,7 +1042,7 @@ def extract_research_tool_warnings(task_root: Path, start_line: int = 0) -> dict
                 if api_category in GLOBAL_FAILURE_CATEGORIES:
                     failure_categories.add(api_category)
                 break
-        warnings.append({"category": category, "message": _short_line(message or raw)})
+        warnings.append({"category": category, "message": _short_line(message)})
         if len(warnings) >= 10:
             break
     return {
@@ -980,11 +1301,22 @@ class BatchControl:
         return "continue"
 
 
-def resume_prompt(task_root: Path, validation: str) -> str:
+def resume_prompt(task_root: Path, validation: str, native_capture: bool = False) -> str:
     excerpt = _short_line(validation, 1800)
+    repair = (
+        "Correct the concrete failure below and finish `research_report.md` plus the semantic "
+        "research artifacts. Include original source URLs in the report when relevant. Do not "
+        "run the research validator; the S² launcher will recapture native-search metadata and "
+        "validate after this turn exits."
+        if native_capture
+        else (
+            "Correct the concrete failure below, finish `research_report.md`, and rerun "
+            f"`python3 validate.py research --task-root {task_root.as_posix()}`."
+        )
+    )
     return f"""Continue the same research task in {task_root.as_posix()}.
 
-The launcher resumed this session because the research freeze did not yet validate. Inspect the existing task files and preserve valid work. Correct the concrete failure below, finish `research_report.md`, and rerun `python3 validate.py research --task-root {task_root.as_posix()}`. Do not launch a coder child or create output/final_report.json.
+The launcher resumed this session because the research freeze did not yet validate. Inspect the existing task files and preserve valid work. {repair} Do not launch a coder child or create output/final_report.json.
 
 Validation failure:
 {excerpt}
@@ -1026,6 +1358,7 @@ async def run_one(
     row: dict[str, Any], index: int, framework: dict[str, Any], args: argparse.Namespace,
     tasks_dir: Path, semaphore: asyncio.Semaphore, progress: Progress,
     control: BatchControl, registry: ProcessRegistry,
+    snapshots: NativeSnapshotCoordinator,
 ) -> dict[str, Any]:
     started = time.time()
     fallback_id = safe_task_id(row, index)
@@ -1042,6 +1375,7 @@ async def run_one(
         if tasks_dir.resolve() not in task_root.parents:
             raise ValueError(f"Task escaped tasks directory: {task_id}")
         decision = route_contract(contract, framework)
+        apply_runtime_search_mode(decision, args.runtime, args.codex_search_mode)
         if args.coder_mode is not None and decision["selected_route"] != "direct_api":
             decision["coder_mode"] = args.coder_mode
             decision["reasons"].append(f"Batch CLI overrode coder_mode to {args.coder_mode}.")
@@ -1057,6 +1391,7 @@ async def run_one(
         )
 
         route = str(decision["selected_route"])
+        native_capture = decision.get("workflow_prompt") == CODEX_NATIVE_WORKFLOW
         coder_mode = str(decision.get("coder_mode", "none"))
         final_stage = "task" if route == "direct_api" or coder_mode == "api" else "research"
         final_artifact = task_root / ("output/final_report.json" if final_stage == "task" else "research_report.md")
@@ -1113,7 +1448,12 @@ async def run_one(
                 task_id, status="running", started_at_epoch=time.time(),
                 queue_wait_s=queue_wait_s,
             )
-            all_output = b""
+            previous_session_log = task_root / "session.log"
+            all_output = (
+                previous_session_log.read_bytes()
+                if args.resume and previous_session_log.is_file()
+                else b""
+            )
             attempt_count = 0
             returncode = 1
             timed_out = False
@@ -1160,11 +1500,16 @@ async def run_one(
                     validation = "research_report.md or validated research freeze missing"
                     while True:
                         attempt_count += 1
-                        active_prompt = resume_prompt(task_root, validation) if session_ref else prompt
+                        active_prompt = (
+                            resume_prompt(task_root, validation, native_capture)
+                            if session_ref
+                            else prompt
+                        )
                         command = (
                             codex_command(
                                 args.model, task_root, session_ref,
                                 args.ignore_user_config, args.unsafe_unattended,
+                                native_search=native_capture,
                             )
                             if args.runtime == "codex"
                             else claude_command(args.model, session_ref, args.unsafe_unattended)
@@ -1177,6 +1522,16 @@ async def run_one(
                         all_output += attempt_output
                         attempt_meta = parse_session_events(attempt_output)
                         session_ref = str(attempt_meta.get("session_ref") or session_ref)
+                        if native_capture:
+                            await finalize_codex_native_archive(
+                                task_root,
+                                all_output,
+                                args.native_archive_mode,
+                                args.native_retriever_backend,
+                                args.native_retrieval_timeout_sec,
+                                snapshots,
+                                registry,
+                            )
                         research_warnings = extract_research_tool_warnings(
                             task_root, start_line=research_log_before
                         )
@@ -1414,6 +1769,7 @@ async def async_main(args: argparse.Namespace) -> int:
 
     progress = Progress(tasks_dir, task_ids)
     registry = ProcessRegistry()
+    snapshots = NativeSnapshotCoordinator()
     control = BatchControl(
         args.api_failure_mode,
         args.quota_pause_seconds,
@@ -1431,7 +1787,7 @@ async def async_main(args: argparse.Namespace) -> int:
                 *[
                     run_one(
                         row, index, framework, args, tasks_dir, semaphore,
-                        progress, control, registry,
+                        progress, control, registry, snapshots,
                     )
                     for index, row in enumerate(rows)
                 ]
@@ -1467,6 +1823,22 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", required=True, help="CSV or JSON array; one row becomes one task")
     parser.add_argument("--runtime", choices=("codex", "claude"), default="codex")
+    parser.add_argument(
+        "--codex-search-mode", choices=("native", "provider"), default="native",
+        help="Codex online route: native web search with automatic metadata capture (default), or explicit project provider tools",
+    )
+    parser.add_argument(
+        "--native-archive-mode", choices=("snapshot", "metadata"), default="snapshot",
+        help="For Codex-native search, preserve URL metadata and optionally cache pages after each turn",
+    )
+    parser.add_argument(
+        "--native-retriever-backend", choices=("jina", "firecrawl", "exa", "direct"), default="jina",
+        help="Background page snapshot backend for Codex-native search",
+    )
+    parser.add_argument(
+        "--native-retrieval-timeout-sec", type=int, default=30,
+        help="Per-source background snapshot timeout for Codex-native search",
+    )
     parser.add_argument("--tasks-dir", default="tasks")
     parser.add_argument("--max-parallel", type=int, default=4)
     parser.add_argument("--model", default="")
@@ -1511,6 +1883,7 @@ def main() -> None:
         or (args.progress_interval_sec is not None and args.progress_interval_sec <= 0)
         or args.quota_pause_seconds <= 0
         or args.quota_max_pause_seconds < 0
+        or args.native_retrieval_timeout_sec <= 0
     )
     if numeric_errors:
         raise SystemExit("Invalid numeric option: parallelism/intervals/timeouts must be positive; retries and maximum pause cannot be negative")

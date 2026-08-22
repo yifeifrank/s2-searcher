@@ -7,7 +7,8 @@ The generated package supports Codex and Claude as standalone research sessions.
 Reusable behavior lives in `prompts/workflows/`:
 
 - `local_agent.md`
-- `online_agent.md`
+- `online_agent.md` for explicit provider search/retrieve/archive work
+- `online_agent_codex_native.md` for native Codex acquisition with launcher-owned preservation
 
 The optional API coding prompt lives at `prompts/coder/api_coder.md`. It is invoked by the launcher after evidence freeze and is not an agent definition.
 
@@ -15,7 +16,7 @@ The optional API coding prompt lives at `prompts/coder/api_coder.md`. It is invo
 
 ## Codex
 
-`.codex/config.toml` contains project sandbox and approval defaults only. The standalone Codex session reads `AGENTS.md`, the dispatcher, and the selected workflow. No `[agents.*]` entries are installed.
+`.codex/config.toml` contains project sandbox and approval defaults only. The standalone Codex session reads `AGENTS.md`, the dispatcher, and the selected workflow. For native online work, `batch.py` launches `codex exec --json` with native search enabled, captures completed web-search events, and performs post-turn preservation before validation. No `[agents.*]` entries are installed.
 
 ## Claude Code
 
@@ -34,7 +35,7 @@ Both wrappers call the same `tools/research_tools.py` implementation. Local fixe
 
 - `direct_api`: no agent session.
 - `local_agent`: one standalone local research session, zero child agents.
-- `online_agent`: one standalone online research session, zero child agents.
+- `online_agent`: one standalone online research session, zero child agents; the selected runtime/search mode determines only its acquisition and preservation prompt.
 - optional `coder_mode=api`: after a successful freeze, the launcher makes one API model call; it is not part of an agent tree.
 
 `inquiry.py` is a one-task entry point over the same launcher implementation. It does not define or spawn an additional agent role. `batch.py` remains the Study-mode entry point for repeated manifest rows.

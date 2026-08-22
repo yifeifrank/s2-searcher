@@ -17,6 +17,19 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("question", help="Research question or objective")
     parser.add_argument("--runtime", choices=("codex", "claude"), default="codex")
+    parser.add_argument(
+        "--codex-search-mode", choices=("native", "provider"), default="native",
+        help="Use Codex native search with automatic preservation (default) or explicit provider tools",
+    )
+    parser.add_argument(
+        "--native-archive-mode", choices=("snapshot", "metadata"), default="snapshot",
+        help="Preserve native-search metadata only, or also cache source pages in the background",
+    )
+    parser.add_argument(
+        "--native-retriever-backend", choices=("jina", "firecrawl", "exa", "direct"), default="jina",
+        help="Background snapshot provider for Codex-native search",
+    )
+    parser.add_argument("--native-retrieval-timeout-sec", type=int, default=30)
     parser.add_argument("--task-id", default="", help="Stable task folder name; generated from the question by default")
     parser.add_argument("--tasks-dir", default="tasks/inquiries")
     parser.add_argument("--model", default="")
@@ -103,6 +116,10 @@ def execution_args(args: argparse.Namespace, framework: dict) -> argparse.Namesp
     defaults = framework.get("defaults", {})
     return argparse.Namespace(
         runtime=args.runtime,
+        codex_search_mode=args.codex_search_mode,
+        native_archive_mode=args.native_archive_mode,
+        native_retriever_backend=args.native_retriever_backend,
+        native_retrieval_timeout_sec=args.native_retrieval_timeout_sec,
         model=args.model,
         coder_mode=None,
         retries=args.retries,
@@ -141,6 +158,7 @@ async def run(args: argparse.Namespace) -> int:
     progress = batch.Progress(task_root, [task_id])
     progress.path = task_root / "inquiry_progress.json"
     registry = batch.ProcessRegistry()
+    snapshots = batch.NativeSnapshotCoordinator()
     control = batch.BatchControl("abort", 900.0, 0.0, progress, registry)
     stop_reporter = asyncio.Event()
     await progress.set_batch_state("dry-run" if args.dry_run else "running")
@@ -158,6 +176,7 @@ async def run(args: argparse.Namespace) -> int:
             progress,
             control,
             registry,
+            snapshots,
         )
     finally:
         stop_reporter.set()

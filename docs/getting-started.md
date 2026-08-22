@@ -73,9 +73,11 @@ After reviewing the pilot:
 
 S² Searcher resumes the prepared tasks instead of overwriting them.
 
-## Online research credentials
+## Online research access
 
-Online research normally uses Firecrawl for search and Exa for retrieval. If credentials are missing, the agent should prepare a private local credential file and tell you where to enter `FIRECRAWL_API_KEY` and `EXA_API_KEY`.
+With Codex, online research uses native search by default, so you do not need a Firecrawl or Exa key. S² automatically records the search actions and URLs that Codex exposes, then asks Jina to preserve source snapshots in the background. Jina works anonymously within its public limit; a key is optional.
+
+With Claude, or when you explicitly request provider-backed Codex research, the default provider pairing is Firecrawl for search and Exa for retrieval. If credentials are missing, the agent should prepare a private local credential file and tell you where to enter `FIRECRAWL_API_KEY` and `EXA_API_KEY`.
 
 Never paste live keys into a chat. Enter them through a local secret manager, process environment, or private `.env` file outside the conversation. If a key has appeared in a chat, issue, log, or shared document, rotate it.
 
@@ -109,7 +111,7 @@ The skill:
 2. creates one self-contained workspace;
 3. applies least-privilege permissions and prepares credentials without exposing them;
 4. runs a dry check before live research;
-5. preserves full sources, line-cited evidence, conflicts, gaps, logs, and resumable state;
+5. preserves conflicts, gaps, logs, resumable state, and source metadata automatically; provider mode also preserves exact line-cited evidence, while native mode can take background page snapshots;
 6. writes a research report and validates the frozen evidence package.
 
 The user remains responsible for the substantive question, authorization to use sources or private documents, and interpretation of the results. Deterministic validation confirms that expected artifacts and evidence links exist; it does not by itself establish substantive or causal validity.

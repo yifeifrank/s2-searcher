@@ -84,6 +84,21 @@ class ExaTests(unittest.TestCase):
         self.assertEqual(request.call_args.kwargs["payload"]["urls"], ["https://example.org/study"])
         self.assertTrue(request.call_args.kwargs["payload"]["text"])
 
+    def test_permanent_exa_error_is_not_retried(self) -> None:
+        with patch.dict(
+            os.environ,
+            {"EXA_API_KEY": "test-key", "EXA_RETRIEVE_DELAYS": "1,2"},
+        ), patch.object(
+            research_tools,
+            "_retrieve_exa_once",
+            side_effect=RuntimeError("HTTP Error 401: Unauthorized"),
+        ) as request, patch.object(research_tools.time, "sleep") as sleep:
+            with self.assertRaisesRegex(RuntimeError, "after 1 attempts"):
+                research_tools.retrieve_exa("https://example.org/study", 30)
+
+        self.assertEqual(request.call_count, 1)
+        sleep.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,6 +22,10 @@ def arguments(**overrides: object) -> argparse.Namespace:
     values: dict[str, object] = {
         "question": "What explains variation in legislative oversight?",
         "runtime": "codex",
+        "codex_search_mode": "native",
+        "native_archive_mode": "snapshot",
+        "native_retriever_backend": "jina",
+        "native_retrieval_timeout_sec": 30,
         "task_id": "inquiry-test",
         "tasks_dir": "tasks/inquiries",
         "model": "",

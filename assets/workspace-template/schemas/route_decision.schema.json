@@ -24,7 +24,8 @@
       "enum": [
         null,
         "prompts/workflows/local_agent.md",
-        "prompts/workflows/online_agent.md"
+        "prompts/workflows/online_agent.md",
+        "prompts/workflows/online_agent_codex_native.md"
       ]
     },
     "difficulty_profile": {"enum": ["light", "standard", "intensive", "extreme"]},

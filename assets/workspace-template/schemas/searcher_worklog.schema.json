@@ -58,7 +58,9 @@
         "additionalProperties": true
       }
     },
-    "search_call_count": {"type": "integer", "minimum": 1},
+    "search_call_count": {"type": "integer", "minimum": 0},
+    "search_capture_mode": {"enum": ["provider", "codex_native"]},
+    "native_source_count": {"type": "integer", "minimum": 0},
     "open_gaps": {"type": "array", "items": {"type": "string"}},
     "frozen_pages": {"type": "array", "items": {"type": "string"}},
     "frozen_page_count": {"type": "integer", "minimum": 0},

@@ -7,11 +7,26 @@ import json
 import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 from tools.instruction_contract import extract_codebook
 
 
 ONLINE_WORKLOG_VERSION = "online-research-v1-20260812"
+CODEX_NATIVE_WORKFLOW = "prompts/workflows/online_agent_codex_native.md"
+
+
+def normalize_native_url(value: str) -> str:
+    candidate = value.strip().rstrip(".,;:!?)]}")
+    try:
+        parsed = urlsplit(candidate)
+    except ValueError:
+        return ""
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+        return ""
+    return urlunsplit(
+        (parsed.scheme.lower(), parsed.netloc.lower(), parsed.path or "/", parsed.query, "")
+    )
 
 
 class Validation:
@@ -114,6 +129,7 @@ def project_check(root: Path) -> None:
         "prompts/coder/api_coder.md",
         "prompts/workflows/local_agent.md",
         "prompts/workflows/online_agent.md",
+        "prompts/workflows/online_agent_codex_native.md",
     ]
     for relative in required:
         check.require((root / relative).is_file(), f"Missing required file: {relative}")
@@ -216,6 +232,9 @@ def project_check(root: Path) -> None:
         ("prompts/workflows/online_agent.md", "--payload-json"),
         ("prompts/workflows/online_agent.md", "research_report.md"),
         ("prompts/workflows/online_agent.md", "library-search"),
+        ("prompts/workflows/online_agent_codex_native.md", "Codex native web search"),
+        ("prompts/workflows/online_agent_codex_native.md", "source traceable"),
+        ("prompts/workflows/online_agent_codex_native.md", "Do not run `validate.py research`"),
         ("prompts/workflows/local_agent.md", "library-search"),
         ("prompts/coder/api_coder.md", "one independent API request"),
         ("api_coder.py", "max_retries=0"),
@@ -226,6 +245,9 @@ def project_check(root: Path) -> None:
         ("batch.py", "kill_process_tree"),
         ("batch.py", "progress_reporter"),
         ("batch.py", "session_state.json"),
+        ("batch.py", "native_searches.ndjson"),
+        ("batch.py", "--codex-search-mode"),
+        ("batch.py", "NativeSnapshotCoordinator"),
         ("inquiry.py", '"work_mode": "inquiry"'),
         ("inquiry.py", "--unsafe-unattended"),
         ("tools/research_tools.py", "library-search"),
@@ -328,6 +350,14 @@ def validate_online_research(
     check.require(worklog.get("contract_version") == ONLINE_WORKLOG_VERSION, "Online research worklog version mismatch")
     check.require(worklog.get("status") == "complete", "Online research worklog is not complete")
     check.require(worklog.get("task_id") == contract.get("task_id"), "Searcher worklog task_id differs from contract")
+    decision = load_json(task_root / "route_decision.json", check, "route decision for online validation")
+    native_capture = isinstance(decision, dict) and decision.get("workflow_prompt") == CODEX_NATIVE_WORKFLOW
+    expected_capture_mode = "codex_native" if native_capture else "provider"
+    declared_capture_mode = str(worklog.get("search_capture_mode") or "provider")
+    check.require(
+        declared_capture_mode == expected_capture_mode,
+        f"search_capture_mode must be {expected_capture_mode} for the selected workflow",
+    )
 
     todos = worklog.get("todo", [])
     todo_ids: list[str] = []
@@ -360,11 +390,71 @@ def validate_online_research(
             check.require(isinstance(targeted, list) and set(targeted) <= set(todo_ids), f"Search iteration {position} has invalid todo_ids")
 
     log_rows = load_ndjson(task_root / "cache" / "research_log.ndjson", check, "research log")
-    searches = sum(row.get("action") == "search" for row in log_rows)
+    if native_capture:
+        native_searches = load_ndjson(
+            task_root / "cache" / "native_searches.ndjson",
+            check,
+            "native search metadata",
+        )
+        native_sources = load_ndjson(
+            task_root / "cache" / "native_sources.ndjson",
+            check,
+            "native source metadata",
+        )
+        searches = sum(row.get("action") == "search" for row in native_searches)
+        check.require(bool(native_sources), "Codex-native research must expose at least one source URL")
+        seen_urls: set[str] = set()
+        for position, row in enumerate(native_sources, 1):
+            url = str(row.get("url", "")).strip()
+            normalized_url = normalize_native_url(url)
+            check.require(
+                bool(normalized_url),
+                f"Native source row {position} has an invalid URL",
+            )
+            check.require(
+                normalized_url not in seen_urls,
+                f"Native source URL is duplicated: {url}",
+            )
+            if normalized_url:
+                seen_urls.add(normalized_url)
+            snapshot = row.get("snapshot")
+            if isinstance(snapshot, dict) and snapshot.get("status") == "success":
+                relative = str(snapshot.get("markdown_path", "")).replace("\\", "/")
+                check.require(bool(relative), f"Native source row {position} snapshot has no markdown_path")
+                if relative:
+                    page = (task_root / relative).resolve()
+                    try:
+                        page.relative_to(task_root.resolve())
+                    except ValueError:
+                        check.errors.append(f"Native source row {position} snapshot escapes the task workspace")
+                    else:
+                        check.require(page.is_file(), f"Native source row {position} snapshot is missing: {relative}")
+        report_text = (task_root / "research_report.md").read_text(
+            encoding="utf-8-sig", errors="replace"
+        ) if (task_root / "research_report.md").is_file() else ""
+        report_urls = {
+            normalize_native_url(match)
+            for match in re.findall(r"https?://[^\s<>\]\[\"']+", report_text)
+            if normalize_native_url(match)
+        }
+        check.require(
+            report_urls <= seen_urls,
+            "Every URL in research_report.md must appear in native_sources.ndjson",
+        )
+        check.require(
+            worklog.get("native_source_count") == len(native_sources),
+            "Worklog native_source_count differs from native_sources.ndjson",
+        )
+    else:
+        searches = sum(row.get("action") == "search" for row in log_rows)
     declared = worklog.get("search_call_count")
     maximum = int(contract.get("budgets", {}).get("max_search_calls", 40))
     check.require(maximum >= 1, "Online max_search_calls must be at least 1")
-    check.require(declared == searches, "Worklog search_call_count differs from research_log.ndjson")
+    count_source = "native_searches.ndjson" if native_capture else "research_log.ndjson"
+    check.require(
+        declared == searches,
+        f"Worklog search_call_count differs from {count_source}",
+    )
     check.require(1 <= searches <= maximum, f"Search call count must be within 1..{maximum}")
     check.require(worklog.get("frozen_pages") == pages, "frozen_pages must exactly match cached pages in sorted order")
     check.require(worklog.get("frozen_page_count") == len(pages), "frozen_page_count is inaccurate")

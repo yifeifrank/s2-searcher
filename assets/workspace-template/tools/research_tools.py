@@ -641,17 +641,26 @@ def retrieve_exa(url: str, timeout: int) -> tuple[str, str]:
     delays = [int(d.strip()) for d in delays_raw.split(",") if d.strip()]
     max_attempts = 1 + len(delays)
     last_error: str = ""
+    attempts_made = 0
     for attempt in range(max_attempts):
+        attempts_made = attempt + 1
         try:
             return _retrieve_exa_once(url, timeout, api_key)
         except Exception as exc:  # noqa: BLE001
             last_error = str(exc)
-            if attempt < len(delays):
+            retryable = True
+            if isinstance(exc, HTTPError):
+                retryable = exc.code in {408, 409, 425, 429} or exc.code >= 500
+            elif re.search(r"\b(400|401|402|403|404|405|422)\b", last_error):
+                retryable = False
+            if retryable and attempt < len(delays):
                 delay = delays[attempt]
                 print(f"[exa retry] attempt {attempt + 1} failed for {url}: {last_error}; "
                       f"retrying in {delay}s", file=sys.stderr)
                 time.sleep(delay)
-    raise RuntimeError(f"Exa retrieve failed after {max_attempts} attempts for {url}: {last_error}")
+            else:
+                break
+    raise RuntimeError(f"Exa retrieve failed after {attempts_made} attempts for {url}: {last_error}")
 
 
 def retrieve_direct(url: str, timeout: int) -> tuple[str, str]:
@@ -754,6 +763,7 @@ def command_library_search(args: argparse.Namespace) -> int:
 def command_retrieve(args: argparse.Namespace) -> int:
     paths = task_paths(Path(args.task_root))
     url = normalize_url(args.url)
+    context = str(args.log_context or "")
     local_hit = lookup_cache(paths.local_index, url)
     if local_hit and not args.force_refresh:
         payload = {
@@ -765,7 +775,7 @@ def command_retrieve(args: argparse.Namespace) -> int:
             "cache_key": str(local_hit["cache_key"]),
             "markdown_path": str(local_hit["markdown_path"]),
         }
-        log_action(paths, {"action": "retrieve", "status": "success", "backend": payload["backend"], "url": url, "cache_hit": True, "source": "local"})
+        log_action(paths, {"action": "retrieve", "status": "success", "backend": payload["backend"], "url": url, "cache_hit": True, "source": "local", "context": context})
         print(json.dumps(payload, ensure_ascii=False))
         return 0
     global_hit = lookup_cache(paths.global_index, url)
@@ -780,11 +790,16 @@ def command_retrieve(args: argparse.Namespace) -> int:
             "cache_key": str(record["cache_key"]),
             "markdown_path": str(record["markdown_path"]),
         }
-        log_action(paths, {"action": "retrieve", "status": "success", "backend": payload["backend"], "url": url, "cache_hit": True, "source": "global"})
+        log_action(paths, {"action": "retrieve", "status": "success", "backend": payload["backend"], "url": url, "cache_hit": True, "source": "global", "context": context})
         print(json.dumps(payload, ensure_ascii=False))
         return 0
     primary = args.backend or os.getenv("WEB_RETRIEVER_BACKEND", DEFAULT_RETRIEVER_BACKEND)
-    backends = backend_chain(primary, os.getenv("WEB_RETRIEVER_FALLBACKS"))
+    fallback_value = (
+        args.fallbacks
+        if args.fallbacks is not None
+        else os.getenv("WEB_RETRIEVER_FALLBACKS")
+    )
+    backends = backend_chain(primary, fallback_value)
     last_error = None
     for backend in backends:
         try:
@@ -799,12 +814,12 @@ def command_retrieve(args: argparse.Namespace) -> int:
                 "cache_key": str(record["cache_key"]),
                 "markdown_path": str(record["markdown_path"]),
             }
-            log_action(paths, {"action": "retrieve", "status": "success", "backend": backend, "url": url, "cache_hit": False, "source": "network"})
+            log_action(paths, {"action": "retrieve", "status": "success", "backend": backend, "url": url, "cache_hit": False, "source": "network", "context": context})
             print(json.dumps(payload, ensure_ascii=False))
             return 0
         except Exception as exc:  # noqa: BLE001
             last_error = str(exc)
-            log_action(paths, {"action": "retrieve", "status": "error", "backend": backend, "url": url, "error": last_error})
+            log_action(paths, {"action": "retrieve", "status": "error", "backend": backend, "url": url, "error": last_error, "context": context})
     raise SystemExit(last_error or "retrieve failed")
 
 
@@ -862,6 +877,12 @@ def build_parser() -> argparse.ArgumentParser:
     retrieve.add_argument("--force-refresh", action="store_true")
     retrieve.add_argument("--timeout", type=int, default=30)
     retrieve.add_argument("--backend")
+    retrieve.add_argument(
+        "--fallbacks",
+        default=None,
+        help="Comma-separated retrieval fallbacks; pass an empty value to disable configured fallbacks",
+    )
+    retrieve.add_argument("--log-context", default="")
 
     archive = subparsers.add_parser("archive")
     archive.add_argument("--payload-json")

@@ -2,7 +2,9 @@
 
 **Search once or study at scale—while preserving every source, citation, conflict, and gap.**
 
-S² Searcher is an evidence-preserving research agent for Codex and Claude Code. It turns open-ended questions and repeated-case study designs into self-contained, auditable research workspaces. Each task uses one standalone session to inspect local documents or search the web, cache full source material, archive line-cited evidence, write a research report, and validate the frozen evidence package.
+S² Searcher is an evidence-preserving research agent for Codex and Claude Code. It turns open-ended questions and repeated-case study designs into self-contained, auditable research workspaces. Each task uses one standalone session to plan and conduct the research, evaluate sources, reconcile conflicts, report gaps, write a research report, and validate the resulting evidence package.
+
+Online work supports two acquisition paths without changing that research method. Codex uses its native web search by default while the S² launcher automatically records observable queries, search actions, cited URLs, and optional background source snapshots. The provider path uses explicit search and retrieval APIs and archives exact line-addressable evidence; it remains available for Claude, reproducible provider runs, and projects that need claim-level frozen citations.
 
 This standalone skill, previously named Research Workspace Builder, is an initial `v0.1.0` friend preview by Yifei Zhu. It is also the first skill curated by [S² Forge](https://github.com/yifeifrank/s2-forge). Its conceptual framework is described in the publicly available preprint [“Agentic Framework for Political Biography Extraction”](https://arxiv.org/abs/2603.18010), which remains under review.
 
@@ -48,7 +50,7 @@ For Codex configuration details, see the official [configuration reference](http
 
 - Python 3.10+
 - Codex CLI and/or Claude Code
-- At least one configured search backend for online research
+- Codex CLI native search, or at least one configured search backend for provider-based online research
 
 Install Python dependencies:
 
@@ -100,7 +102,7 @@ python3 inquiry.py \
   --dry-run
 ```
 
-Remove `--dry-run` for a requested live inquiry after configuring a search backend. Add `--local-only` to use only local and previously preserved workspace sources.
+Remove `--dry-run` for a requested live inquiry. Codex uses native search automatically and takes background snapshots through Jina by default; a Jina key is optional. Add `--local-only` to use only local and previously preserved workspace sources, or `--codex-search-mode provider` to use the explicit provider workflow.
 
 For a Study-mode demonstration, create the bundled elite-biography example:
 
@@ -122,7 +124,7 @@ python3 batch.py \
   --dry-run
 ```
 
-Copy `.env.example` to `.env`, configure only the providers you use, and remove `--dry-run` for a live batch. The sample configuration uses Firecrawl for search and Exa for retrieval, with cross-provider fallbacks. The online defaults—40 searches and 3,600 seconds—are generous ceilings, not targets, and can be changed per task or manifest row.
+Copy `.env.example` to `.env` only when you need provider-backed acquisition, higher Jina limits, direct API routing, or the optional coder. The provider sample uses Firecrawl for search and Exa for retrieval, with cross-provider fallbacks. The online defaults—40 searches and 3,600 seconds—are generous ceilings, not targets, and can be changed per task or manifest row.
 
 A reproducible, credential-free contract and route snapshot is included under [examples/elite-biography-dry-run](examples/elite-biography-dry-run/README.md).
 

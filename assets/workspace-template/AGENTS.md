@@ -19,16 +19,20 @@ Agent routes terminate at a validated evidence freeze and `research_report.md`. 
 
 ## Evidence tools
 
-For online work, use only the project research-tools workflow for search, retrieval, caching, and archival. Direct browser or MCP search bypasses the auditable artifacts and is not a substitute.
+For provider-backed online work, use only the project research-tools workflow for search, retrieval, caching, and line archival. Direct browser or MCP search bypasses that evidence contract.
+
+When `route_decision.json` names `prompts/workflows/online_agent_codex_native.md`, use Codex native web search instead. Do not call the project search, retrieve, or archive commands for those native web sources. Cite original URLs normally; the launcher captures observable search metadata and cited URLs, optionally snapshots them through a background retriever, finalizes mechanical worklog fields, and validates after the session exits.
 
 For local work, inspect the fixed collection with `rg` and bounded reads, then use `tools/local_ingest.py` to create stable cached pages. Archive supporting cached line ranges with `tools/research_tools.py`.
 
 ## Completion
 
-Local and online research finish only after:
+Local and provider-backed online research finish only after:
 
 ```bash
 python3 validate.py research --task-root <workspace>
 ```
 
 succeeds. The `direct_api` route and optional post-research API coder additionally produce `output/final_report.json`, which the launcher checks with `validate.py task`.
+
+For the Codex-native online workflow, finish the semantic plan, worklog, and cited `research_report.md` without running the final validator yourself. The launcher owns post-session metadata capture and validation because those artifacts do not exist until the Codex JSONL stream is complete.

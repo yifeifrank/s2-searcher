@@ -5,7 +5,7 @@ description: Turn an ordinary-language social science question or repeated-case 
 
 # S² Searcher
 
-Requirements: Python 3.10+, Codex CLI and/or Claude Code, and at least one configured search backend for online research.
+Requirements: Python 3.10+ and Codex CLI and/or Claude Code. Codex can use native web search without a separate search API; provider-backed online research requires a configured backend.
 
 Create a self-contained research task-pack inside a subfolder chosen by the user. The generated package must remain general-purpose: the user's question or codebook defines the domain, while agent prompts, routing, evidence storage, and execution mechanics remain generic.
 
@@ -33,7 +33,7 @@ Ask only for missing choices that would materially change the result. Infer the 
 
 A user's initial research request authorizes preparation and dry-run validation only. Words such as “investigate,” “research,” “search,” or “study” in that request do not authorize live agent, provider, paid API, or web-search calls. After presenting the prepared task and consequential assumptions, require a distinct, explicit approval to start live research. Then resume that same task instead of recreating or overwriting it.
 
-Never ask a user to paste provider keys into a chat prompt. Configure Firecrawl search with Exa fallback and Exa retrieval with Firecrawl fallback by default; do not add direct HTTP as a default because Claude's network allow-list does not permit arbitrary destination domains. Create credential placeholders when needed, and tell the user where to provision `FIRECRAWL_API_KEY` and `EXA_API_KEY` through a local secret mechanism. Check availability without printing, logging, or copying credential values.
+Never ask a user to paste provider keys into a chat prompt. For Codex, use native search plus automatic launcher capture by default; the background snapshotter uses anonymous Jina unless the user selects metadata-only preservation or another backend. For Claude or explicitly provider-backed Codex work, configure Firecrawl search with Exa fallback and Exa retrieval with Firecrawl fallback; do not add direct HTTP as a default because Claude's network allow-list does not permit arbitrary destination domains. Create credential placeholders only when needed, and tell the user where to provision keys through a local secret mechanism. Check availability without printing, logging, or copying credential values.
 
 ## Study-mode input
 
@@ -121,7 +121,7 @@ Preserve exactly three execution routes:
 
 Do not invent a RAG, embedding, vector-database, or separate synthesizer route. Evidence selection is an activity performed by the local or online agent.
 
-For `online_agent`, the standalone task session owns the complete planning, search, retrieval, archival, reconciliation, reporting, and evidence-freeze loop. It must not launch child agents. Difficulty changes budgets and planning depth, not agent architecture.
+For `online_agent`, the standalone task session owns planning, search strategy, source judgment, corroboration, reconciliation, gap handling, and reporting. It must not launch child agents. The acquisition path may differ: provider mode keeps the explicit search/retrieve/archive loop, while Codex-native mode delegates observable search metadata, cited-URL capture, optional background snapshots, mechanical worklog fields, and final validation to the launcher after each turn. Difficulty changes budgets and planning depth, not agent architecture.
 
 Default to a generous ceiling of 40 search calls and 3,600 seconds for a standalone research session. These are overridable per task or manifest row and are not consumption targets: finish early when coverage is complete, while leaving enough headroom for difficult cases.
 
@@ -137,9 +137,9 @@ The generated package includes:
 
 - combined user instruction, extracted codebook mirror, and optional output schema;
 - task and routing contracts;
-- `direct_api`, `local_agent`, and `online_agent` workflows;
+- `direct_api`, `local_agent`, provider-backed `online_agent`, and Codex-native `online_agent` workflows;
 - standalone Codex and Claude project instructions;
-- the preserved research-tools implementation for online search, retrieval, caching, and archival, plus a separate local-document ingester;
+- automatic Codex-native search-event and source-URL capture, optional background snapshots, the preserved provider research-tools implementation, and a separate local-document ingester;
 - a one-question `inquiry.py` entry point and cross-session `batch.py` launcher over the same execution core;
 - progress, retry, prompt, session, provenance, research-report, and validation artifacts;
 - an optional one-call API coder that is disabled by default and is not an agent;
@@ -154,7 +154,7 @@ The launchers must not bypass these protections by default. `--unsafe-unattended
 
 ## Cross-session consistency
 
-Treat `prompts/workflows/*.md` as the research behavioral source of truth. The workflow files preserve the complete search, retrieval, archival, gap, and freeze contracts; `task_instruction.md` only dispatches to them. The standalone Codex or Claude session must execute the selected workflow itself and must not launch child agents. The optional API coding prompt is separate under `prompts/coder/` and must not be registered as an agent.
+Treat `prompts/workflows/*.md` as the research behavioral source of truth. The provider and Codex-native online prompts share the substantive search standard but use different acquisition and preservation contracts; `task_instruction.md` dispatches to the exact prompt recorded in the route decision. The standalone Codex or Claude session must execute the selected workflow itself and must not launch child agents. The optional API coding prompt is separate under `prompts/coder/` and must not be registered as an agent.
 
 Read [agent-packaging.md](references/agent-packaging.md) when changing session packaging.
 Read [prompt-preservation.md](references/prompt-preservation.md) before modifying a workflow prompt.

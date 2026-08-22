@@ -4,7 +4,7 @@ This is a standalone, general-purpose research task pack. It routes each task th
 
 - `direct_api`: compact, self-contained inputs are sent directly to a configured API;
 - `local_agent`: a tool-using Codex or Claude session examines a fixed local document collection;
-- `online_agent`: a Codex or Claude session performs search, retrieval, caching, and evidence archival.
+- `online_agent`: a Codex or Claude session researches the open web using either Codex native search or explicit provider tools.
 
 The package does not include RAG, embeddings, a vector database, or a separate synthesizer service. Local and online agents perform evidence selection through ordinary file and research tools.
 
@@ -52,7 +52,7 @@ This JSON file is a generated machine-readable mirror. Do not edit it independen
 
 The former elite-biography configuration is retained only as an example under `examples/elite-biography/`.
 
-## 2. Configure credentials
+## 2. Choose online acquisition and configure only what it needs
 
 Create an environment and install the small dependency set first:
 
@@ -64,7 +64,9 @@ python3 -m pip install -r requirements.txt
 
 On Windows, activate with `.venv\\Scripts\\activate`.
 
-Copy `.env.example` to `.env` and fill only the services you intend to use. Never commit `.env`. The sample configuration recommends Firecrawl for search and Exa for retrieval. Check the variables without network calls using `python3 tools/provider_smoke_check.py`, then add `--live` for one small end-to-end provider test.
+Codex online tasks use native search by default. The agent keeps the full planning, source-evaluation, corroboration, conflict, gap, and reporting workflow, but it does not spend context calling archive tools. After each turn, the launcher automatically records every observable native search action and cited URL. It also snapshots those URLs through Jina by default. Anonymous Jina retrieval needs no credential; set `JINA_API_KEY` only for a higher service limit, choose `--native-archive-mode metadata` to keep URLs without page snapshots, or select another `--native-retriever-backend`.
+
+Claude and explicitly provider-backed Codex tasks use the original line-addressable workflow. Copy `.env.example` to `.env` and fill only the services you intend to use. Never commit `.env`. The sample configuration recommends Firecrawl for search and Exa for retrieval. Check the variables without network calls using `python3 tools/provider_smoke_check.py`, then add `--live` for one small end-to-end provider test. Select this path for Codex with `--codex-search-mode provider`.
 
 For `direct_api`, set:
 
@@ -78,7 +80,7 @@ The API route uses the OpenAI Python client and the Responses API interface. A c
 
 For the optional post-research coder, set `EVIDENCE_CODER_API_KEY`, `EVIDENCE_CODER_BASE_URL`, and `EVIDENCE_CODER_MODEL`, then put `coder_mode: api` in a task contract or pass `--coder-mode api`. It is disabled by default, makes exactly one model request, and does not create a coder agent.
 
-For `online_agent`, configure at least one search backend. The sample uses Firecrawl search with Exa search fallback, then Exa retrieval with Firecrawl fallback. Edit the backend variables when you prefer Serper or Jina. Direct HTTP retrieval remains available as an explicit option, but it is not a default because Claude's provider-domain network allow-list does not permit arbitrary destination domains.
+For a provider-backed `online_agent`, configure at least one search backend. The sample uses Firecrawl search with Exa search fallback, then Exa retrieval with Firecrawl fallback. Edit the backend variables when you prefer Serper or Jina. Direct HTTP retrieval remains available as an explicit option, but it is not a default because Claude's provider-domain network allow-list does not permit arbitrary destination domains.
 
 ## 3. Start from this folder
 
@@ -140,9 +142,21 @@ The default standalone-session allowance is deliberately generous: 40 search cal
 
 The `direct_api` route runs through `direct_api.py` inside the batch process and does not raise an agent session.
 
-## 6. Research and archive tools
+## 6. Research and archive paths
 
-Online search, retrieval, caching, and evidence archival use the preserved research-tool interface:
+The research strategy is shared. Both paths plan coverage, search iteratively, follow second-order leads, prioritize authoritative sources, check identity, corroborate consequential claims, reconcile conflicts, stop repeated dead ends, and report unresolved gaps. They differ only in how sources enter the evidence package.
+
+For Codex-native search, no agent archival command is required. The launcher creates:
+
+```text
+<task>/cache/native_searches.ndjson  # observable queries and search actions
+<task>/cache/native_sources.ndjson   # deduplicated URLs and snapshot status
+<task>/cache/pages/*.md              # optional background snapshots
+```
+
+Native source metadata is required. Background snapshots default to Jina and are best effort; they happen after the model turn, so the current Codex session can rely on its optimized native-search context rather than rereading local copies. Visible original URLs in `research_report.md` are automatically merged into the source record. Native mode does not invent line citations for content the launcher cannot observe.
+
+The provider path uses the preserved research-tool interface:
 
 ```bash
 python3 tools/research_tools.py --task-root <task> search --query "..."
@@ -160,7 +174,7 @@ python3 tools/local_ingest.py --task-root <task> --path inputs/documents/file.md
 
 Add `--share-with-library` when the user intends that local source to be discoverable by later tasks in this workspace.
 
-Canonical artifacts are `<task>/cache/cache_index.jsonl`, `<task>/cache/research_log.ndjson`, `<task>/cache/pages/*.md`, and `<task>/evidence.ndjson`. Online retrieval and explicitly shared local documents populate the framework-level source library at `tasks/_global_cache/`. Archived line citations are validated before they are appended.
+Canonical provider artifacts are `<task>/cache/cache_index.jsonl`, `<task>/cache/research_log.ndjson`, `<task>/cache/pages/*.md`, and `<task>/evidence.ndjson`. Online retrieval and explicitly shared local documents populate the framework-level source library at `tasks/_global_cache/`. Archived line citations are validated before they are appended.
 
 ## 7. Validate
 
@@ -188,6 +202,8 @@ Each batch writes:
 <tasks-dir>/<task_id>/evidence.ndjson
 <tasks-dir>/<task_id>/research_report.md
 ```
+
+Codex-native online tasks additionally write `cache/native_searches.ndjson` and `cache/native_sources.ndjson`. Provider-backed tasks use the research log, page cache, and exact evidence records instead.
 
 `direct_api` and `coder_mode=api` additionally write `<task>/output/final_report.json`; the optional coder also records `api/coder_request.json`, `api/coder_response.json`, and `api/coder_execution.json`.
 

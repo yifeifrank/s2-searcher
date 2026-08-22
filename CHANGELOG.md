@@ -4,6 +4,8 @@ All notable changes are documented here. This project follows semantic versionin
 
 ## [Unreleased]
 
+- Added a Codex-native online workflow that retains the full research strategy while the launcher automatically captures observable search actions, queries, cited URLs, and optional post-turn source snapshots; the original provider-backed line-citation workflow remains available.
+- Hardened retrieval handling so native snapshots remain best effort, recovered provider fallbacks do not trigger false batch aborts, and permanent Exa client/authentication errors are not retried.
 - Simplified beginner prompts so users provide only the research question, cases, and materially relevant preferences; built-in preparation, safety, evidence, and validation requirements now remain implicit.
 - Clarified that an initial research request authorizes preparation and a dry run only; live agents, searches, and provider calls require separate explicit approval.
 - Renamed Research Workspace Builder to S² Searcher, including the canonical repository, skill ID, installation paths, and deterministic release archive.

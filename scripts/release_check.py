@@ -141,6 +141,14 @@ def validate_fresh_workspace() -> None:
             raise SystemExit(f"Unexpected dry-run summary: {summary}")
         if summary.get("unsafe_unattended") is not False:
             raise SystemExit("Dry run did not record the safe permission default")
+        online_path = tasks / "example_online" / "route_decision.json"
+        online_decision = (
+            json.loads(online_path.read_text(encoding="utf-8"))
+            if online_path.is_file()
+            else None
+        )
+        if not isinstance(online_decision, dict) or online_decision.get("workflow_prompt") != "prompts/workflows/online_agent_codex_native.md":
+            raise SystemExit(f"Codex dry run did not select the native-search workflow: {online_decision}")
 
         inquiry_workspace = Path(temporary) / "inquiry-workspace"
         run(
@@ -225,6 +233,7 @@ def validate_release_archive() -> None:
             "s2-searcher/assets/workspace-template/inquiry.py",
             "s2-searcher/assets/workspace-template/inputs/inquiry_instruction.md",
             "s2-searcher/assets/workspace-template/tools/provider_smoke_check.py",
+            "s2-searcher/assets/workspace-template/prompts/workflows/online_agent_codex_native.md",
         ):
             if required not in names:
                 raise SystemExit(f"Release archive missing {required}")

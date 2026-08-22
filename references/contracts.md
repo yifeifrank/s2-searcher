@@ -33,19 +33,18 @@ Agent routes preserve:
 - rendered prompt;
 - route decision;
 - plan and optional worklog;
-- cached or ingested pages;
-- `cache/cache_index.jsonl` and `cache/research_log.ndjson`;
-- `evidence.ndjson` with line citations;
+- cached or ingested pages when available;
+- provider-mode `cache/cache_index.jsonl`, `cache/research_log.ndjson`, and line-cited `evidence.ndjson`, or native-mode `cache/native_searches.ndjson` and `cache/native_sources.ndjson`;
 - `research_report.md` as the terminal research synthesis;
 - session log and agent-session identifiers.
 
-Retrieved web pages are also copied into the framework-level workspace library under `tasks/_global_cache/`. A later task may materialize a matching library source into its own cache, but it must create its own evidence records and report citations.
+Retrieved or successfully snapshotted web pages are also copied into the framework-level workspace library under `tasks/_global_cache/`. A later task may materialize a matching library source into its own cache, but it must create its own evidence records and report citations.
 
 Machine schemas cover the task contract, route decision, evidence records, online-research worklog, and optional final report.
 
 ## Output contract
 
-Local and online routes normally terminate with `research_report.md`, the frozen cache, `evidence.ndjson`, and the research log. They do not require structured coding.
+Local and online routes normally terminate with `research_report.md` and a validated task-local evidence package. Provider and local workflows include exact line citations; Codex-native workflows require observable source metadata and may add background page snapshots without claiming that unobserved native context is line-addressable. They do not require structured coding.
 
 When `direct_api` or optional `coder_mode=api` is used, `output/final_report.json` contains:
 

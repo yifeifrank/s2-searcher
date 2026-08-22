@@ -19,16 +19,18 @@ The prose in `instruction.md` defines the task, coverage, source rules, quality 
 
 - `direct_api`: do not launch an agent workflow. `direct_api.py` owns this route.
 - `local_agent`: the current standalone session is the sole local research agent; read and follow `prompts/workflows/local_agent.md` completely.
-- `online_agent`: the current standalone session is the complete online research agent; read and follow `prompts/workflows/online_agent.md` completely. Do not launch child agents.
+- `online_agent`: the current standalone session is the complete online research agent; read and follow the exact `workflow_prompt` recorded in `route_decision.json`. It is either the provider-backed `prompts/workflows/online_agent.md` or the Codex-native `prompts/workflows/online_agent_codex_native.md`. Do not launch child agents.
 
 Do not compress the selected workflow into an improvised summary. If a contract and route decision disagree, stop before research and report the mismatch.
 
 ## Completion gate
 
-For `local_agent` and `online_agent`, the research session is complete only when:
+For `local_agent` and provider-backed `online_agent`, the research session is complete only when:
 
 ```bash
 python3 validate.py research --task-root <workspace>
 ```
 
 succeeds. Do not launch a coder agent. If `coder_mode=api`, the launcher—not this session—makes one post-freeze API call and then applies `validate.py task`. Unknown values remain explicit; never invent facts merely to fill the codebook.
+
+For the Codex-native online workflow, create the completed semantic artifacts and stop without calling the validator. The launcher must first extract native-search metadata from the completed JSONL stream, optionally snapshot cited URLs, finalize mechanical worklog fields, and then apply the same research validation gate.
