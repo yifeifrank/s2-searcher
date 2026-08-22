@@ -9,7 +9,15 @@ import json
 import sys
 from pathlib import Path
 
-from research_tools import append_ndjson, log_action, lookup_cache, now_iso, slugify, task_paths
+from research_tools import (
+    append_ndjson,
+    log_action,
+    lookup_cache,
+    lookup_cache_key,
+    now_iso,
+    slugify,
+    task_paths,
+)
 
 
 TEXT_SUFFIXES = {
@@ -37,6 +45,20 @@ TEXT_SUFFIXES = {
 }
 
 
+def share_with_library(paths, record: dict, markdown: str) -> bool:
+    cache_key = str(record["cache_key"])
+    global_path = paths.global_pages / f"{cache_key}.md"
+    global_path.write_text(markdown, encoding="utf-8")
+    if lookup_cache_key(paths.global_index, cache_key) is not None:
+        return True
+    library_record = dict(record)
+    library_record["markdown_path"] = str(global_path)
+    library_record["shared_from"] = "local_ingest"
+    library_record["content_sha256"] = hashlib.sha256(markdown.encode("utf-8")).hexdigest()
+    append_ndjson(paths.global_index, library_record)
+    return True
+
+
 def command_ingest(args: argparse.Namespace) -> int:
     source = Path(args.path).expanduser().resolve()
     if not source.is_file():
@@ -56,6 +78,11 @@ def command_ingest(args: argparse.Namespace) -> int:
     if existing and not args.force_refresh:
         cached_path = paths.task_root / str(existing.get("markdown_path", ""))
         if cached_path.is_file():
+            shared = share_with_library(
+                paths,
+                existing,
+                cached_path.read_text(encoding="utf-8-sig", errors="replace"),
+            ) if args.share_with_library else False
             payload = {
                 "status": "success",
                 "cache_hit": True,
@@ -64,6 +91,7 @@ def command_ingest(args: argparse.Namespace) -> int:
                 "canonical_url": canonical_url,
                 "cache_key": str(existing["cache_key"]),
                 "markdown_path": str(existing["markdown_path"]),
+                "shared_with_library": shared,
             }
             log_action(paths, {"action": "ingest", **payload, "path": str(source)})
             print(json.dumps(payload, ensure_ascii=False))
@@ -86,9 +114,11 @@ def command_ingest(args: argparse.Namespace) -> int:
         "backend": "local_ingest",
         "source_path": str(source),
         "source_sha256": hashlib.sha256(raw).hexdigest(),
+        "content_sha256": hashlib.sha256(markdown.encode("utf-8")).hexdigest(),
         "stored_at": now_iso(),
     }
     append_ndjson(paths.local_index, record)
+    shared = share_with_library(paths, record, markdown) if args.share_with_library else False
     log_action(
         paths,
         {
@@ -98,6 +128,7 @@ def command_ingest(args: argparse.Namespace) -> int:
             "path": str(source),
             "cache_key": cache_key,
             "cache_hit": False,
+            "shared_with_library": shared,
         },
     )
     print(
@@ -110,6 +141,7 @@ def command_ingest(args: argparse.Namespace) -> int:
                 "canonical_url": canonical_url,
                 "cache_key": cache_key,
                 "markdown_path": rel_path,
+                "shared_with_library": shared,
             },
             ensure_ascii=False,
         )
@@ -123,6 +155,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--path", required=True)
     parser.add_argument("--title")
     parser.add_argument("--force-refresh", action="store_true")
+    parser.add_argument(
+        "--share-with-library",
+        action="store_true",
+        help="Copy this ingested source into the workspace library for later tasks",
+    )
     return parser
 
 

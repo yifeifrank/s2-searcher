@@ -2,6 +2,11 @@
 
 All notable changes are documented here. This project follows semantic versioning after the initial preview.
 
+## [Unreleased]
+
+- Added Inquiry mode as a single-question entry point over the existing standalone task engine; the current manifest path is documented as Study mode.
+- Exposed `tasks/_global_cache/` as a searchable workspace source library and added opt-in sharing for ingested local documents.
+
 ## [0.1.0] - 2026-08-12
 
 Initial friend-preview release.

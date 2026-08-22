@@ -11,5 +11,6 @@ The active workflows under `prompts/workflows/` preserve the source framework's 
 7. replacing mandatory agent-based coding and correction loops with an optional, explicitly configured, single API call after the research session;
 8. using the same workflow contracts for Codex and Claude;
 9. omitting experiment-only telemetry requirements that are not portable across runtimes.
+10. checking the workspace source library before new discovery while retaining task-specific inspection, archival, and evidence freeze.
 
 The dated pre-simplification backup retains the former prompts and historical source snapshots. Active workflow changes should preserve the substantive research and verification requirements above.

@@ -12,9 +12,29 @@ Its workflow preserves the source framework's separation between evidence acquis
 
 Local and online routes are research-first and stop at a validated frozen evidence package by default. They do not require a coder. A user may opt into `coder_mode=api`, which makes one Responses-compatible API call over `research_report.md` and the archived evidence excerpts after the research process exits.
 
-## 1. Edit the combined instruction contract
+## Work modes
 
-The authoritative user-authored input is:
+- **Study mode:** use `batch.py` when one protocol or codebook applies across many manifest rows.
+- **Inquiry mode:** use `inquiry.py` for one open-ended question without supplying a codebook or manifest.
+
+Both modes use the same route, evidence, report, safety, and validation contracts. Retrieved pages are preserved in the workspace source library at `tasks/_global_cache/`; later tasks can search and materialize those sources while creating their own evidence records.
+
+Every generated workspace contains both entry points. The instruction initially installed by the builder sets the convenient starting point; it does not remove either mode.
+
+Run an Inquiry dry run:
+
+```bash
+python3 inquiry.py \
+  "What explains variation in legislative oversight across democracies?" \
+  --runtime codex \
+  --dry-run
+```
+
+Remove `--dry-run` for a requested live inquiry. Add `--local-only` to prohibit web search and use only local or workspace-library sources.
+
+## 1. Edit the Study-mode instruction contract
+
+For structured Study work, the authoritative user-authored input is:
 
 ```text
 inputs/instruction.md
@@ -129,6 +149,7 @@ python3 tools/research_tools.py --task-root <task> search --query "..."
 python3 tools/research_tools.py --task-root <task> search --search-intent '{"must_include":["..."]}'
 python3 tools/research_tools.py --task-root <task> retrieve --url "..."
 python3 tools/research_tools.py --task-root <task> archive --payload-path evidence_payload.json
+python3 tools/research_tools.py --task-root <task> library-search --query "..."
 ```
 
 For a fixed local collection, ingest relevant text-like files separately:
@@ -137,7 +158,9 @@ For a fixed local collection, ingest relevant text-like files separately:
 python3 tools/local_ingest.py --task-root <task> --path inputs/documents/file.md
 ```
 
-Canonical artifacts are `<task>/cache/cache_index.jsonl`, `<task>/cache/research_log.ndjson`, `<task>/cache/pages/*.md`, and `<task>/evidence.ndjson`. Online retrieval can reuse the framework-level `tasks/_global_cache/`. Archived line citations are validated before they are appended.
+Add `--share-with-library` when the user intends that local source to be discoverable by later tasks in this workspace.
+
+Canonical artifacts are `<task>/cache/cache_index.jsonl`, `<task>/cache/research_log.ndjson`, `<task>/cache/pages/*.md`, and `<task>/evidence.ndjson`. Online retrieval and explicitly shared local documents populate the framework-level source library at `tasks/_global_cache/`. Archived line citations are validated before they are appended.
 
 ## 7. Validate
 
@@ -169,5 +192,7 @@ Each batch writes:
 `direct_api` and `coder_mode=api` additionally write `<task>/output/final_report.json`; the optional coder also records `api/coder_request.json`, `api/coder_response.json`, and `api/coder_execution.json`.
 
 Use `--retry-manifest` to write only failed or timed-out rows for later resumption.
+
+Inquiry tasks use the same per-task artifacts under `tasks/inquiries/<task_id>/`, plus `inquiry_progress.json` and `inquiry_result.json` instead of collection-level batch summaries.
 
 For unattended batches, the launcher also provides periodic progress heartbeats, per-stage process timeouts, full process-tree cleanup, Codex/Claude session references for `--resume`, token/error parsing, and zero-child-agent auditing. Auth and quota failures abort safely by default. Use `--api-failure-mode pause` only when you intentionally want quota failures to pause and retry after `--quota-pause-seconds`; authentication failures still abort. The optional API coder remains exactly one model request per row even when agent retries are enabled.

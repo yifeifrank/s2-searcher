@@ -1,17 +1,26 @@
 ---
 name: research-workspace-builder
-description: Create a standalone research task-pack from a combined Markdown instruction containing prose requirements and an embedded JSON codebook, with auditable local and online evidence workflows, direct API extraction, optional single-call API coding, routing, batching, caching, archiving, and validation. Use when the user asks to scaffold, generate, install, migrate, or standardize a reusable research workspace or framework. Also accept separate prose and JSON as compatibility inputs. Do not use merely for a one-off research answer.
+description: Create a standalone research workspace with auditable local and online evidence, routing, batching, caching, archiving, and validation. Use Study mode for one protocol or codebook applied across many targets, or Inquiry mode for one substantive question without a user-defined codebook or manifest. Use when the user asks to scaffold, generate, install, migrate, or standardize a reusable research workspace, run repeated case research, or preserve inspectable sources and line-cited evidence for an open-ended inquiry. Do not use for simple fact lookups that do not need an evidence archive.
 ---
 
 # Research Workspace Builder
 
 Requirements: Python 3.10+, Codex CLI and/or Claude Code, and at least one configured search backend for online research.
 
-Create a self-contained research task-pack inside a subfolder chosen by the user. The generated package must remain general-purpose: the user's codebook defines the domain, while agent prompts, routing, evidence storage, and batch mechanics remain generic.
+Create a self-contained research task-pack inside a subfolder chosen by the user. The generated package must remain general-purpose: the user's question or codebook defines the domain, while agent prompts, routing, evidence storage, and execution mechanics remain generic.
 
 Read [design-lineage.md](references/design-lineage.md) when explaining how the generated workflow relates to the source article or when changing its architecture.
 
-## Required input
+## Work modes
+
+- **Study mode** is the existing manifest-driven path: one instruction/codebook is applied repeatedly while targets vary. Use `batch.py` and preserve one standalone task folder per row.
+- **Inquiry mode** accepts one free-form substantive question through `inquiry.py`. It uses an internal generic coverage contract, disables structured coding, and preserves the same report, cached sources, evidence lines, worklog, and validation artifacts as Study-mode agent tasks.
+
+Both modes share `tasks/_global_cache/` as a workspace source library. A later task may search and materialize earlier sources, but must inspect them and create its own task-specific evidence records. Local documents enter the shared library only through the explicit `--share-with-library` option.
+
+Every generated workspace retains both entry points. `--inquiry` only supplies a useful initial contract when the user has no codebook yet; it does not remove Study mode.
+
+## Study-mode input
 
 Prefer one user-supplied Markdown file containing prose instructions and a `## Codebook` section with one or more fenced JSON objects. The prose defines research/coding requirements; the JSON chunks jointly define output fields and format. Top-level keys must be unique across chunks. The builder extracts their merged object to `inputs/codebook.json`, and validation requires exact equality.
 
@@ -29,7 +38,27 @@ If the target already contains files, stop and ask whether the user wants a diff
 
 ## Create the package
 
-Run:
+For an Inquiry-first workspace that does not require a user codebook, run:
+
+```bash
+python3 <skill-root>/scripts/create_workspace.py \
+  --target <target-subfolder> \
+  --inquiry \
+  --runtime both
+```
+
+Then prepare one task without model or web calls:
+
+```bash
+cd <target-subfolder>
+python3 inquiry.py "<substantive research question>" \
+  --runtime codex \
+  --dry-run
+```
+
+Remove `--dry-run` only when the user requests a live run. Use `--local-only` when the inquiry must rely exclusively on local and workspace-library sources.
+
+For a Study-mode workspace, run:
 
 ```bash
 python3 <skill-root>/scripts/create_workspace.py \
@@ -96,7 +125,7 @@ The generated package includes:
 - `direct_api`, `local_agent`, and `online_agent` workflows;
 - standalone Codex and Claude project instructions;
 - the preserved research-tools implementation for online search, retrieval, caching, and archival, plus a separate local-document ingester;
-- a cross-runtime `batch.py` launcher;
+- a one-question `inquiry.py` entry point and cross-runtime `batch.py` launcher over the same execution core;
 - progress, retry, prompt, session, provenance, research-report, and validation artifacts;
 - an optional one-call API coder that is disabled by default and is not an agent;
 - `.env.example` without credentials;
@@ -106,7 +135,7 @@ The generated package includes:
 
 The generated Codex project defaults to `workspace-write` with network access and `approval_policy = "never"`. This lets the standalone session write task artifacts and call online research services while denying filesystem escalation without pausing a non-interactive batch. Claude projects enable the Bash sandbox, fail closed when it is unavailable, restrict network access to the bundled research backends, and use `dontAsk` so unapproved actions are denied rather than paused.
 
-The launcher must not bypass these protections by default. `--unsafe-unattended` is the only opt-in bypass and is appropriate only inside an externally isolated container or virtual machine. Make this distinction prominent in generated and repository documentation. Permission settings do not supply credentials or eliminate prompt-injection and data-egress risks; recommend provider-scoped keys and non-sensitive workspaces.
+The launchers must not bypass these protections by default. `--unsafe-unattended` is the only opt-in bypass and is appropriate only inside an externally isolated container or virtual machine. Make this distinction prominent in generated and repository documentation. Permission settings do not supply credentials or eliminate prompt-injection and data-egress risks; recommend provider-scoped keys and non-sensitive workspaces.
 
 ## Cross-runtime consistency
 
@@ -133,6 +162,15 @@ After scaffolding:
      --dry-run
    ```
 
+6. Run an Inquiry dry run without model or search calls:
+
+   ```bash
+   python3 inquiry.py "How does existing evidence bear on this question?" \
+     --runtime codex \
+     --task-id inquiry-check \
+     --dry-run
+   ```
+
 Do not launch live API, Codex, Claude, or web-search work unless the user asks for an operational run.
 
 ## Handoff
@@ -141,7 +179,8 @@ Tell the user:
 
 - where the standalone skill lives;
 - where the generated project lives, if created;
-- that normal scaffolding prefers one Markdown instruction with an embedded JSON codebook;
+- whether Study or Inquiry mode was used;
+- that Study scaffolding prefers one Markdown instruction with an embedded JSON codebook;
 - how to install the skill into `$CODEX_HOME/skills/` (normally `$HOME/.codex/skills/`) for Codex;
 - how to install the same directory into `$HOME/.claude/skills/` for Claude Code;
 - that a new or reloaded session may be needed before newly generated project agents are visible;

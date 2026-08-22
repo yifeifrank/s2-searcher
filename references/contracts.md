@@ -24,6 +24,8 @@ Each task contract records:
 - search, runtime, and retry budgets;
 - arbitrary task metadata.
 
+Study mode creates these contracts from manifest rows. Inquiry mode creates one contract from a free-form question, records `metadata.work_mode=inquiry`, disables structured coding, and references the bundled generic inquiry instruction/codebook as a compatibility layer. Both modes terminate in the same task-local evidence and report contracts.
+
 ## Process contract
 
 Agent routes preserve:
@@ -36,6 +38,8 @@ Agent routes preserve:
 - `evidence.ndjson` with line citations;
 - `research_report.md` as the terminal research synthesis;
 - session log and runtime identifiers.
+
+Retrieved web pages are also copied into the framework-level workspace library under `tasks/_global_cache/`. A later task may materialize a matching library source into its own cache, but it must create its own evidence records and report citations.
 
 Machine schemas cover the task contract, route decision, evidence records, online-research worklog, and optional final report.
 

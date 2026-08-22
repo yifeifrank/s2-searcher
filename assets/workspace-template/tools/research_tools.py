@@ -323,6 +323,7 @@ def store_cache(paths: TaskPaths, canonical_url: str, markdown: str, backend: st
         "cache_key": cache_key,
         "markdown_path": rel_path,
         "backend": backend,
+        "content_sha256": hashlib.sha256(markdown.encode("utf-8")).hexdigest(),
         "stored_at": now_iso(),
     }
     append_ndjson(paths.local_index, record)
@@ -340,8 +341,75 @@ def materialize_global_hit(paths: TaskPaths, record: dict[str, Any]) -> dict[str
         shutil.copyfile(source_path, target_path)
     local_record = dict(record)
     local_record["markdown_path"] = rel_path
-    append_ndjson(paths.local_index, local_record)
+    if lookup_cache_key(paths.local_index, cache_key) is None:
+        append_ndjson(paths.local_index, local_record)
     return local_record
+
+
+def search_library(
+    paths: TaskPaths,
+    query: str,
+    num_results: int,
+    *,
+    materialize: bool,
+) -> list[dict[str, Any]]:
+    """Search the workspace cache as a small transparent source library."""
+    terms = list(dict.fromkeys(
+        term for term in re.findall(r"[\w-]+", query.casefold()) if len(term) > 1
+    ))
+    if not terms:
+        raise ValueError("library search query must contain a searchable term")
+    if num_results < 1:
+        raise ValueError("num_results must be positive")
+
+    newest: dict[str, dict[str, Any]] = {}
+    for record in reversed(read_ndjson(paths.global_index)):
+        cache_key = str(record.get("cache_key", "")).strip()
+        if cache_key and cache_key not in newest:
+            newest[cache_key] = record
+
+    matches: list[tuple[int, dict[str, Any]]] = []
+    query_folded = query.casefold().strip()
+    for cache_key, record in newest.items():
+        page = paths.global_pages / f"{cache_key}.md"
+        if not page.is_file():
+            continue
+        text = page.read_text(encoding="utf-8-sig", errors="replace")
+        folded = text.casefold()
+        metadata_text = " ".join(
+            str(record.get(key, ""))
+            for key in ("canonical_url", "backend", "source_path")
+        ).casefold()
+        score = sum(min(folded.count(term), 10) for term in terms)
+        score += 3 * sum(term in metadata_text for term in terms)
+        if query_folded and query_folded in folded:
+            score += 10
+        if score <= 0:
+            continue
+        matched_lines: list[dict[str, Any]] = []
+        for line_number, line in enumerate(text.splitlines(), 1):
+            if any(term in line.casefold() for term in terms):
+                matched_lines.append({"line": line_number, "text": line.strip()[:300]})
+                if len(matched_lines) >= 3:
+                    break
+        result = {
+            "cache_key": cache_key,
+            "canonical_url": str(record.get("canonical_url", "")),
+            "backend": str(record.get("backend", "")),
+            "content_sha256": str(record.get("content_sha256", "")),
+            "score": score,
+            "matched_lines": matched_lines,
+        }
+        matches.append((score, result))
+
+    matches.sort(key=lambda item: (-item[0], item[1]["cache_key"]))
+    results = [item[1] for item in matches[:num_results]]
+    if materialize:
+        for result in results:
+            record = newest[str(result["cache_key"])]
+            local_record = materialize_global_hit(paths, record)
+            result["markdown_path"] = str(local_record["markdown_path"])
+    return results
 
 
 def search_serper(query: str, num_results: int, *, hl: str = "", gl: str = "") -> list[dict[str, str]]:
@@ -647,6 +715,36 @@ def command_search(args: argparse.Namespace) -> int:
     raise SystemExit(last_error or "search failed")
 
 
+def command_library_search(args: argparse.Namespace) -> int:
+    paths = task_paths(Path(args.task_root))
+    try:
+        results = search_library(
+            paths,
+            args.query.strip(),
+            args.num_results,
+            materialize=not args.no_materialize,
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    log_action(
+        paths,
+        {
+            "action": "library_search",
+            "status": "success",
+            "query": args.query.strip(),
+            "result_count": len(results),
+            "materialized": not args.no_materialize,
+        },
+    )
+    print(
+        json.dumps(
+            {"query": args.query.strip(), "result_count": len(results), "results": results},
+            ensure_ascii=False,
+        )
+    )
+    return 0
+
+
 def command_retrieve(args: argparse.Namespace) -> int:
     paths = task_paths(Path(args.task_root))
     url = normalize_url(args.url)
@@ -744,6 +842,15 @@ def build_parser() -> argparse.ArgumentParser:
     search.add_argument("--num-results", type=int, default=10)
     search.add_argument("--backend")
 
+    library_search = subparsers.add_parser("library-search")
+    library_search.add_argument("--query", required=True)
+    library_search.add_argument("--num-results", type=int, default=10)
+    library_search.add_argument(
+        "--no-materialize",
+        action="store_true",
+        help="List matching library sources without copying them into the task cache",
+    )
+
     retrieve = subparsers.add_parser("retrieve")
     retrieve.add_argument("--url", required=True)
     retrieve.add_argument("--force-refresh", action="store_true")
@@ -762,6 +869,8 @@ def main() -> int:
     try:
         if args.command == "search":
             return command_search(args)
+        if args.command == "library-search":
+            return command_library_search(args)
         if args.command == "retrieve":
             return command_retrieve(args)
         if args.command == "archive":

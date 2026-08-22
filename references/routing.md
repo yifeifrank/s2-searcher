@@ -10,11 +10,11 @@ Use when all required evidence is already known, compact, self-contained, and su
 
 ### `local_agent`
 
-Use for a fixed collection that benefits from iterative file discovery and close reading. One standalone session uses local tools such as `rg`, bounded file reads, and `tools/local_ingest.py` to materialize citeable Markdown. It archives line-based evidence, writes `research_report.md`, and freezes the inventory.
+Use for a fixed collection that benefits from iterative file discovery and close reading. One standalone session uses local tools such as `rg`, bounded file reads, workspace-library search, and `tools/local_ingest.py` to materialize citeable Markdown. It archives line-based evidence, writes `research_report.md`, and freezes the inventory.
 
 ### `online_agent`
 
-Use when sources must be discovered externally. One standalone session owns planning, gap tracking, search, retrieval, archival, the research report, and evidence freeze. It uses the research-tools search, retrieve, and archive loop so pages, audit logs, and evidence remain task-local. It does not launch child agents.
+Use when sources may need to be discovered externally. One standalone session owns planning, workspace-library lookup, gap tracking, web search, retrieval, archival, the research report, and evidence freeze. It materializes reusable sources into its task cache so audit logs and evidence remain task-local. It does not launch child agents.
 
 Both agent routes default to `coder_mode=none`. When explicitly enabled, `coder_mode=api` makes one post-freeze API call outside the agent session.
 

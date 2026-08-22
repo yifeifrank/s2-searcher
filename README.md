@@ -1,13 +1,22 @@
 # Research Workspace Builder
 
-Research Workspace Builder is a Codex and Claude Code skill that creates self-contained, auditable research task packs. Each task uses one standalone session to inspect local documents or search the web, cache full source material, archive line-cited evidence, write a research report, and validate the frozen evidence package.
+Research Workspace Builder is a Codex and Claude Code skill that creates self-contained, auditable research workspaces. Each task uses one standalone session to inspect local documents or search the web, cache full source material, archive line-cited evidence, write a research report, and validate the frozen evidence package.
 
 This subskill is an initial `v0.1.0` friend preview by Yifei Zhu. Its conceptual framework is described in the publicly available preprint [“Agentic Framework for Political Biography Extraction”](https://arxiv.org/abs/2603.18010), which remains under review.
+
+## Two work modes, one evidence system
+
+- **Study mode** uses the existing CSV/JSON manifest launcher when guidance is stable and targets vary.
+- **Inquiry mode** takes one open-ended question without requiring a user codebook or manifest.
+
+Both modes preserve task-local evidence and reuse full sources through the workspace library at `tasks/_global_cache/`. Reusing a source never reuses an earlier conclusion automatically: each task inspects the source and archives its own supporting line ranges.
+
+Every generated workspace includes both entry points. Inquiry-first scaffolding only removes the initial codebook requirement; it does not create a separate or reduced research architecture.
 
 ## What it builds
 
 ```text
-combined instruction + embedded JSON codebook
+open question | instruction + embedded JSON codebook
                        |
                        v
         direct API | local agent | online agent
@@ -59,7 +68,23 @@ For Claude Code, install the same directory under `~/.claude/skills/research-wor
 
 ## Five-minute example
 
-Create the bundled elite-biography demonstration:
+Create an Inquiry-first workspace and prepare one question without model or web calls:
+
+```bash
+python3 scripts/create_workspace.py \
+  --target ../open-inquiry \
+  --inquiry \
+  --runtime both
+cd ../open-inquiry
+python3 inquiry.py \
+  "What explains variation in legislative oversight across democracies?" \
+  --runtime codex \
+  --dry-run
+```
+
+Remove `--dry-run` for a requested live inquiry after configuring a search backend. Add `--local-only` to use only local and previously preserved workspace sources.
+
+For a Study-mode demonstration, create the bundled elite-biography example:
 
 ```bash
 python3 scripts/create_workspace.py \
@@ -104,7 +129,7 @@ Run the same release checks used by GitHub Actions:
 python3 scripts/release_check.py
 ```
 
-“CI” means GitHub automatically runs these checks for every proposed change. The workflow tests supported Python versions, validates schemas and prompts, scaffolds a fresh workspace, checks all three route decisions, and completes a three-row dry run without credentials or paid services.
+“CI” means GitHub automatically runs these checks for every proposed change. The workflow tests supported Python versions, validates schemas and prompts, scaffolds fresh Study and Inquiry workspaces, checks all three route decisions, verifies source-library reuse, and completes dry runs without credentials or paid services.
 
 Build a deterministic archive to send directly to a friend:
 

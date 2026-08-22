@@ -36,3 +36,5 @@ Both wrappers call the same `tools/research_tools.py` implementation. Local fixe
 - `local_agent`: one standalone local research session, zero child agents.
 - `online_agent`: one standalone online research session, zero child agents.
 - optional `coder_mode=api`: after a successful freeze, the launcher makes one API model call; it is not part of an agent tree.
+
+`inquiry.py` is a one-task entry point over the same launcher implementation. It does not define or spawn an additional agent role. `batch.py` remains the Study-mode entry point for repeated manifest rows.

@@ -94,12 +94,15 @@ def project_check(root: Path) -> None:
         "router.py",
         "validate.py",
         "batch.py",
+        "inquiry.py",
         "direct_api.py",
         "api_coder.py",
         "task_instruction.md",
         ".env.example",
         "inputs/instruction.md",
         "inputs/codebook.json",
+        "inputs/inquiry_instruction.md",
+        "inputs/inquiry_codebook.json",
         "schemas/task_contract.schema.json",
         "schemas/route_decision.schema.json",
         "schemas/final_report.schema.json",
@@ -130,8 +133,28 @@ def project_check(root: Path) -> None:
 
     config = load_json(root / "framework.json", check, "framework configuration")
     codebook = load_json(root / "inputs/codebook.json", check, "codebook")
+    inquiry_codebook = load_json(
+        root / "inputs/inquiry_codebook.json", check, "inquiry codebook"
+    )
     check.require(isinstance(config, dict), "framework.json must contain an object")
     check.require(isinstance(codebook, dict), "inputs/codebook.json must contain an object")
+    check.require(
+        isinstance(inquiry_codebook, dict),
+        "inputs/inquiry_codebook.json must contain an object",
+    )
+    inquiry_instruction = root / "inputs/inquiry_instruction.md"
+    if inquiry_instruction.is_file() and isinstance(inquiry_codebook, dict):
+        try:
+            embedded_inquiry_codebook = extract_codebook(
+                inquiry_instruction.read_text(encoding="utf-8-sig")
+            )
+        except ValueError as exc:
+            check.errors.append(f"Invalid inquiry instruction contract: {exc}")
+        else:
+            check.require(
+                embedded_inquiry_codebook == inquiry_codebook,
+                "inquiry_codebook.json differs from the codebook embedded in inquiry_instruction.md",
+            )
     if isinstance(config, dict):
         instructions_path = root / str(config.get("instructions_path", ""))
         codebook_path = root / str(config.get("codebook_path", ""))
@@ -192,6 +215,8 @@ def project_check(root: Path) -> None:
         ("prompts/workflows/online_agent.md", "--force-refresh"),
         ("prompts/workflows/online_agent.md", "--payload-json"),
         ("prompts/workflows/online_agent.md", "research_report.md"),
+        ("prompts/workflows/online_agent.md", "library-search"),
+        ("prompts/workflows/local_agent.md", "library-search"),
         ("prompts/coder/api_coder.md", "one independent API request"),
         ("api_coder.py", "max_retries=0"),
         ("api_coder.py", '"model_call_count": 1'),
@@ -201,6 +226,10 @@ def project_check(root: Path) -> None:
         ("batch.py", "kill_process_tree"),
         ("batch.py", "progress_reporter"),
         ("batch.py", "session_state.json"),
+        ("inquiry.py", '"work_mode": "inquiry"'),
+        ("inquiry.py", "--unsafe-unattended"),
+        ("tools/research_tools.py", "library-search"),
+        ("tools/local_ingest.py", "--share-with-library"),
     ]
     for relative, marker in marker_checks:
         path = root / relative

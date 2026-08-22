@@ -74,6 +74,17 @@ Keep `search_call_count` equal to the exact number of `action: search` records i
 
 Use only the project research tool. Do not use MCP or browser search tools; they bypass the cache, evidence archive, and action log.
 
+### 0. Search the workspace library
+
+Before the first web search, look for relevant sources preserved by earlier tasks:
+
+```bash
+python3 tools/research_tools.py --task-root <workspace> library-search \
+  --query "<key entities, concepts, or identifiers>" --num-results 10
+```
+
+The command searches `tasks/_global_cache/` and materializes matches into the current task cache. Treat matches as candidate sources, not inherited conclusions: inspect the complete local Markdown and archive new task-specific evidence ranges. Continue to web search for unresolved gaps, necessary corroboration, or time-sensitive refreshes.
+
 ### 1. Search
 
 Prefer a structured search intent:

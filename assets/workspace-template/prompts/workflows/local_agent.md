@@ -6,11 +6,14 @@ Use this workflow when the route decision selects `local_agent` for a fixed loca
 2. Create `<workspace>/plan.md` from the combined prose and codebook coverage targets.
 3. Resolve contract document paths relative to the framework root unless already absolute.
 4. Use `rg`, bounded reads, and ordinary local file tools to inspect the fixed collection. Do not use external search.
+   You may also search sources shared by earlier workspace tasks with `python3 tools/research_tools.py --task-root <workspace> library-search --query "<terms>"`. Inspect every materialized page and archive evidence for this task rather than inheriting earlier conclusions.
 5. Materialize relevant text-like sources with:
 
    ```bash
    python3 tools/local_ingest.py --task-root <workspace> --path <local-file>
    ```
+
+   Add `--share-with-library` only when the user intends that local source to be reusable by later tasks in this workspace.
 
 6. Inspect cached Markdown and archive source-linked line ranges through `tools/research_tools.py archive`.
 7. Track conflicts, missing fields, and identity or case ambiguity.

@@ -23,6 +23,11 @@ def parse_args() -> argparse.Namespace:
         help="Combined Markdown instruction containing ## Codebook fenced JSON object(s)",
     )
     source.add_argument("--codebook", help="Compatibility input: standalone JSON codebook")
+    source.add_argument(
+        "--inquiry",
+        action="store_true",
+        help="Create a general inquiry workspace without a user-supplied codebook",
+    )
     source.add_argument("--example", choices=sorted(SUPPORTED_EXAMPLES))
     parser.add_argument(
         "--instructions",
@@ -152,6 +157,13 @@ def main() -> None:
             codebook = extract_codebook(instruction_text)
         except ValueError as exc:
             raise SystemExit(f"Invalid combined instruction at {instruction_source}: {exc}") from exc
+    elif args.inquiry:
+        instruction_source = template / "inputs" / "inquiry_instruction.md"
+        instruction_text = instruction_source.read_text(encoding="utf-8-sig")
+        try:
+            codebook = extract_codebook(instruction_text)
+        except ValueError as exc:
+            raise SystemExit(f"Invalid bundled inquiry instruction: {exc}") from exc
     elif args.example:
         instruction_source = (
             skill_root
@@ -216,6 +228,8 @@ def main() -> None:
     print(f"Extracted codebook mirror: {target / 'inputs' / 'codebook.json'}")
     print(f"Runtime support: {args.runtime}")
     print(f"Default route: {args.default_route}")
+    if args.inquiry:
+        print('Inquiry mode: run python3 inquiry.py "<question>" --runtime codex|claude')
     print("Start Codex or Claude from inside that folder so project agents load.")
 
 

@@ -15,7 +15,7 @@ The default Codex profile restricts writes to the workspace while allowing outbo
 
 ## Unsafe mode
 
-`batch.py --unsafe-unattended` invokes the runtimes' permission-bypass modes. Use it only in an externally isolated, disposable container or virtual machine with narrowly scoped credentials. The batch summary records this choice.
+`batch.py --unsafe-unattended` and `inquiry.py --unsafe-unattended` invoke the runtimes' permission-bypass modes. Use them only in an externally isolated, disposable container or virtual machine with narrowly scoped credentials. Run metadata records this choice.
 
 ## Reporting a vulnerability
 

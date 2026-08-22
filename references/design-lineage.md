@@ -22,6 +22,8 @@ The generated package generalizes the workflow described by Yifei Zhu, Songpo Ya
 - Active research prompts preserve the source framework's search, retrieval, archival, gap, and freeze discipline while removing orchestration layers and the mandatory coder agent.
 - Local and online routes terminate at a research report and frozen evidence by default. Optional coding is one launcher-owned API request over those artifacts, enabled explicitly after research.
 - Prose instructions and the JSON codebook share one authoritative Markdown contract; a deterministic extracted JSON mirror supports routing and validation without creating a second user-maintained source.
+- Study mode retains the manifest-driven repeated-case workflow. Inquiry mode compiles one free-form question into the same task, route, evidence, and validation contracts through an internal generic coverage object.
+- The existing framework-level cache is exposed as a workspace source library. Later tasks may discover and materialize earlier sources, but must select and archive their own task-specific evidence.
 
 The pre-simplification skill backup retains the earlier source snapshots. See `prompt-preservation.md` for the adaptation ledger.
 
