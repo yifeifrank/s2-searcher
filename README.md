@@ -47,11 +47,11 @@ python3 -m pip install -r assets/workspace-template/requirements.txt
 
 ## Install the skill
 
-Clone the Poli_skills collection, then copy or symlink this subskill into your runtime's skill directory:
+Clone the S2 Forge collection, then copy or symlink this subskill into your runtime's skill directory:
 
 ```bash
-git clone https://github.com/yifeifrank/Poli_skills.git
-ln -s /absolute/path/to/Poli_skills/skills/research-workspace-builder \
+git clone https://github.com/yifeifrank/s2-forge.git
+ln -s /absolute/path/to/s2-forge/skills/research-workspace-builder \
   ~/.codex/skills/research-workspace-builder
 ```
 
