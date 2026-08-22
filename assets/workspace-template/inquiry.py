@@ -31,7 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--unsafe-unattended",
         action="store_true",
-        help="Bypass runtime permissions; use only in an isolated disposable container or VM",
+        help="Bypass session permissions; use only in an isolated disposable container or VM",
     )
     return parser.parse_args()
 
@@ -52,7 +52,7 @@ def inquiry_contract(args: argparse.Namespace, framework: dict) -> dict:
         else int(defaults.get("session_timeout_seconds", 3600))
     )
     if max_search_calls < 1 or max_runtime_seconds < 1 or args.retries < 0:
-        raise ValueError("search and runtime ceilings must be positive; retries cannot be negative")
+        raise ValueError("search and session-time ceilings must be positive; retries cannot be negative")
 
     route = "local_agent" if args.local_only else "online_agent"
     row = {

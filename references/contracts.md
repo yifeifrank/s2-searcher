@@ -21,7 +21,7 @@ Each task contract records:
 - route override;
 - optional post-research `coder_mode` (`none` by default or one `api` call);
 - output-complexity and evidence-risk factors;
-- search, runtime, and retry budgets;
+- search, session-time, and retry budgets;
 - arbitrary task metadata.
 
 Study mode creates these contracts from manifest rows. Inquiry mode creates one contract from a free-form question, records `metadata.work_mode=inquiry`, disables structured coding, and references the bundled generic inquiry instruction/codebook as a compatibility layer. Both modes terminate in the same task-local evidence and report contracts.
@@ -37,7 +37,7 @@ Agent routes preserve:
 - `cache/cache_index.jsonl` and `cache/research_log.ndjson`;
 - `evidence.ndjson` with line citations;
 - `research_report.md` as the terminal research synthesis;
-- session log and runtime identifiers.
+- session log and agent-session identifiers.
 
 Retrieved web pages are also copied into the framework-level workspace library under `tasks/_global_cache/`. A later task may materialize a matching library source into its own cache, but it must create its own evidence records and report citations.
 

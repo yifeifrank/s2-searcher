@@ -2,7 +2,7 @@
 
 ## Trust boundary
 
-Research agents process untrusted documents and web content. Cached pages can contain prompt injection, misleading instructions, malicious links, or sensitive material. Treat retrieved text as evidence to inspect, never as runtime instructions.
+Research agents process untrusted documents and web content. Cached pages can contain prompt injection, misleading instructions, malicious links, or sensitive material. Treat retrieved text as evidence to inspect, never as session instructions.
 
 The default Codex profile restricts writes to the workspace while allowing outbound network access. It is not a complete read boundary. The default Claude Code profile enables filesystem and network sandboxing and fails closed when its sandbox is unavailable. These controls reduce host risk but do not make arbitrary web content trustworthy or prevent every form of data disclosure. Use a container or virtual machine without home-directory or credential mounts when host confidentiality matters; see [docs/least-privilege.md](docs/least-privilege.md).
 
@@ -15,7 +15,7 @@ The default Codex profile restricts writes to the workspace while allowing outbo
 
 ## Unsafe mode
 
-`batch.py --unsafe-unattended` and `inquiry.py --unsafe-unattended` invoke the runtimes' permission-bypass modes. Use them only in an externally isolated, disposable container or virtual machine with narrowly scoped credentials. Run metadata records this choice.
+`batch.py --unsafe-unattended` and `inquiry.py --unsafe-unattended` invoke the sessions' permission-bypass modes. Use them only in an externally isolated, disposable container or virtual machine with narrowly scoped credentials. Run metadata records this choice.
 
 ## Reporting a vulnerability
 

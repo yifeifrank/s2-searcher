@@ -36,9 +36,9 @@ The default is designed to be useful without granting unrestricted host access:
 
 - Codex runs with `workspace-write`, outbound network access, and no approval escalation. It can write inside the generated project; out-of-scope filesystem writes are denied.
 - Claude Code enables its Bash sandbox, fails closed when sandboxing is unavailable, uses `dontAsk`, blocks child agents and `.env` reads through built-in tools, and pre-allows the bundled research-service domains.
-- The batch launcher does not use either runtime's permission-bypass flag by default.
+- The batch launcher does not use either session's permission-bypass flag by default.
 
-Online research still processes untrusted content and uses network credentials. `workspace-write` constrains writes but should not be treated as a complete host read boundary. Use provider-scoped keys, avoid sensitive workspaces, and inspect outputs before relying on them. The explicit `--unsafe-unattended` option disables runtime permission enforcement and is intended only for externally isolated containers or virtual machines.
+Online research still processes untrusted content and uses network credentials. `workspace-write` constrains writes but should not be treated as a complete host read boundary. Use provider-scoped keys, avoid sensitive workspaces, and inspect outputs before relying on them. The explicit `--unsafe-unattended` option disables session permission enforcement and is intended only for externally isolated containers or virtual machines.
 
 For Codex configuration details, see the official [configuration reference](https://developers.openai.com/codex/config-file/config-reference/). See the [least-privilege deployment guide](docs/least-privilege.md) and the complete [threat model](SECURITY.md).
 
@@ -56,7 +56,7 @@ python3 -m pip install -r assets/workspace-template/requirements.txt
 
 ## Install the skill
 
-Clone the S2 Forge collection, then copy or symlink this subskill into your runtime's skill directory:
+Clone the S2 Forge collection, then copy or symlink this subskill into your agent's skill directory:
 
 ```bash
 git clone https://github.com/yifeifrank/s2-forge.git
@@ -64,7 +64,7 @@ ln -s /absolute/path/to/s2-forge/skills/research-workspace-builder \
   ~/.codex/skills/research-workspace-builder
 ```
 
-For Claude Code, install the same directory under `~/.claude/skills/research-workspace-builder`. Reload the runtime after installation.
+For Claude Code, install the same directory under `~/.claude/skills/research-workspace-builder`. Reload the session after installation.
 
 ## Start with one prompt
 

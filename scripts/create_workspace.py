@@ -226,7 +226,7 @@ def main() -> None:
     print(f"Created research task pack: {target}")
     print(f"Combined instruction: {target / 'inputs' / 'instruction.md'}")
     print(f"Extracted codebook mirror: {target / 'inputs' / 'codebook.json'}")
-    print(f"Runtime support: {args.runtime}")
+    print(f"Session support: {args.runtime}")
     print(f"Default route: {args.default_route}")
     if args.inquiry:
         print('Inquiry mode: run python3 inquiry.py "<question>" --runtime codex|claude')

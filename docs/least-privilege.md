@@ -34,12 +34,11 @@ provide only:
 
 Do not mount a home directory, SSH directory, cloud configuration, browser
 profile, unrelated datasets, Git credentials, or the host container socket. A
-container provides the missing read boundary; the runtime's workspace sandbox
+container provides the missing read boundary; the session's workspace sandbox
 then supplies a useful second layer. Keep the safe launcher default inside the
 container—`--unsafe-unattended` is for compatibility testing, not a requirement.
 
-For an attended run, changing the runtime approval policy to an interactive mode
+For an attended run, changing the session approval policy to an interactive mode
 adds human review but prevents fully unattended batching. For a public package,
 the current non-interactive, sandboxed default is the more reproducible choice;
 the container/VM recommendation is the stronger confidentiality choice.
-

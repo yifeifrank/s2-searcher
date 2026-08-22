@@ -8,6 +8,7 @@ All notable changes are documented here. This project follows semantic versionin
 - Exposed `tasks/_global_cache/` as a searchable workspace source library and added opt-in sharing for ingested local documents.
 - Added an agent-first, no-code beginner guide, a credential-safe provider smoke check, and a recommended Firecrawl-search/Exa-retrieval sample configuration.
 - Updated Firecrawl search and scrape calls to the current v2 endpoints while retaining response compatibility with the earlier search shape.
+- Adopted session terminology in user-facing documentation and clarified the repository's evidence-workspace description.
 
 ## [0.1.0] - 2026-08-12
 

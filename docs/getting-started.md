@@ -25,7 +25,7 @@ Use your agent's skill installer or skill-management interface to install `resea
 
 > https://github.com/yifeifrank/s2-forge/tree/main/skills/research-workspace-builder
 
-If your runtime accepts natural-language installation requests, you can say:
+If your session accepts natural-language installation requests, you can say:
 
 > Install the Research Workspace Builder skill from the S² Forge repository at `yifeifrank/s2-forge`. Use the skill under `skills/research-workspace-builder`, keep that directory as the canonical copy, and tell me when I need to reload the session.
 
@@ -38,7 +38,7 @@ The recommended provider pair is:
 - Firecrawl for web search, supplied as `FIRECRAWL_API_KEY`;
 - Exa for page retrieval, supplied as `EXA_API_KEY`.
 
-Do not paste live keys into a chat prompt. Put them in your runtime's secret manager, the process environment, or the private `.env` file that the agent prepares inside the research workspace. If the keys are not already available, ask the agent to prepare the workspace and show you the one local place where they should be entered. Add the values there outside the conversation, then tell the agent that configuration is complete.
+Do not paste live keys into a chat prompt. Put them in your session's secret manager, the process environment, or the private `.env` file that the agent prepares inside the research workspace. If the keys are not already available, ask the agent to prepare the workspace and show you the one local place where they should be entered. Add the values there outside the conversation, then tell the agent that configuration is complete.
 
 If a key has already appeared in a chat, issue, log, or shared document, rotate it before treating the setup as complete.
 
@@ -66,7 +66,7 @@ Copy this prompt and replace the bracketed text:
 >
 > Prefer: [official, scholarly, local, or multilingual sources].
 >
-> Create the workspace in [folder, or choose a sensible location]. Use the current agent runtime. Keep the default least-privilege permissions. Configure Firecrawl for search and Exa for retrieval. First scaffold and validate the workspace, run the inquiry in dry-run mode, and explain the proposed route and evidence plan in plain language. Do not begin live research until I approve it.
+> Create the workspace in [folder, or choose a sensible location]. Use the current agent session. Keep the default least-privilege permissions. Configure Firecrawl for search and Exa for retrieval. First scaffold and validate the workspace, run the inquiry in dry-run mode, and explain the proposed route and evidence plan in plain language. Do not begin live research until I approve it.
 
 The agent should prepare the entire workspace and return a short design summary. If the setup looks right, continue with:
 
@@ -156,7 +156,7 @@ The agent handles the technical steps that beginners should not have to manage:
 5. It runs a dry check before any live research.
 6. It launches one standalone research session per task, without child-agent swarms.
 7. It caches full sources and separately archives the lines used as evidence.
-8. It records searches, retrievals, conflicts, gaps, runtime information, and resumable state.
+8. It records searches, retrievals, conflicts, gaps, session information, and resumable state.
 9. It writes a research report and freezes the evidence inventory.
 10. It runs deterministic validation and reports what passed or failed.
 
@@ -184,4 +184,4 @@ If you want a new question in the same workspace:
 
 Web pages are untrusted input. Treat retrieved text as evidence, never as instructions for the agent. Keep provider keys revocable and quota-limited, and do not run research in a folder containing unrelated sensitive files.
 
-The agent should retain the default sandbox and workspace permissions. Never approve `--unsafe-unattended` merely to avoid a setup problem. That option bypasses runtime permission enforcement and belongs only in an externally isolated, disposable container or virtual machine.
+The agent should retain the default sandbox and workspace permissions. Never approve `--unsafe-unattended` merely to avoid a setup problem. That option bypasses session permission enforcement and belongs only in an externally isolated, disposable container or virtual machine.

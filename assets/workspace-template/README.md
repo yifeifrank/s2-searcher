@@ -54,7 +54,7 @@ The former elite-biography configuration is retained only as an example under `e
 
 ## 2. Configure credentials
 
-Create an environment and install the small runtime dependency set first:
+Create an environment and install the small dependency set first:
 
 ```bash
 python3 -m venv .venv
@@ -98,7 +98,7 @@ This permits writes inside the generated workspace and allows the network calls 
 
 Claude projects enable the Bash sandbox with fail-closed behavior, use `dontAsk`, deny child-agent launches and `.env` reads through built-in tools, and pre-allow only the bundled research-service domains. The agent may still use provider credentials supplied through its environment, so use scoped keys and a workspace that contains no unrelated sensitive data.
 
-The launcher never bypasses runtime permission checks by default. `--unsafe-unattended` restores the runtimes' bypass flags and must be used only inside an externally isolated container or virtual machine. Network access and exposure to untrusted web content still carry prompt-injection and data-egress risk under either mode.
+The launcher never bypasses session permission checks by default. `--unsafe-unattended` restores the sessions' bypass flags and must be used only inside an externally isolated container or virtual machine. Network access and exposure to untrusted web content still carry prompt-injection and data-egress risk under either mode.
 
 ## 4. Create or edit a task contract
 
@@ -134,7 +134,7 @@ For a real agent batch, remove `--dry-run` and choose `--runtime codex` or `--ru
 
 Each local or online row is one complete standalone research session and launches no child agents.
 
-To run inside an externally isolated container or VM with runtime permissions bypassed, add `--unsafe-unattended`. The batch summary records whether this unsafe opt-in was used.
+To run inside an externally isolated container or VM with session permissions bypassed, add `--unsafe-unattended`. The batch summary records whether this unsafe opt-in was used.
 
 The default standalone-session allowance is deliberately generous: 40 search calls and 3,600 seconds. Override `max_search_calls` and `max_runtime_seconds` in a task contract or add those columns to a manifest when a case needs a different ceiling. These values are limits, not targets; a completed evidence plan should finish early.
 

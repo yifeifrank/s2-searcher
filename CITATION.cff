@@ -8,7 +8,7 @@ authors:
   - family-names: "Zhu"
     given-names: "Yifei"
 license: Apache-2.0
-abstract: "A skill and standalone task-pack generator for auditable local and online research with cached sources, line-cited evidence, validation, and resumable batch execution."
+abstract: "An agent skill that turns social science questions and repeated-case study designs into auditable research workspaces with cached sources, line-cited evidence, validation, and resumable execution."
 keywords:
   - research agents
   - evidence provenance

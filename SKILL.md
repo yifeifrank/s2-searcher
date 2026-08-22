@@ -27,7 +27,7 @@ Accept a beginner's ordinary-language research description as sufficient input. 
 
 For Inquiry mode, turn the user's question and scope into the existing one-question entry point. For Study mode, draft the combined Markdown instruction, embedded JSON codebook, and CSV or JSON manifest from the user's prose. Summarize the proposed unit of analysis, fields, allowed values, missingness rules, source priorities, and case count for substantive approval before a live batch.
 
-Ask only for missing choices that would materially change the result. Infer the current runtime when possible and choose a sensible workspace location when the user has no preference. Run a dry check before live research. When the user approves the prepared task, resume that same task for the live run instead of recreating or overwriting it. Launch live model or provider calls only when the user authorizes an operational run.
+Ask only for missing choices that would materially change the result. Infer the current session when possible and choose a sensible workspace location when the user has no preference. Run a dry check before live research. When the user approves the prepared task, resume that same task for the live run instead of recreating or overwriting it. Launch live model or provider calls only when the user authorizes an operational run.
 
 Never ask a user to paste provider keys into a chat prompt. Configure Firecrawl search with Exa fallback and Exa retrieval with Firecrawl fallback by default; do not add direct HTTP as a default because Claude's network allow-list does not permit arbitrary destination domains. Create credential placeholders when needed, and tell the user where to provision `FIRECRAWL_API_KEY` and `EXA_API_KEY` through a local secret mechanism. Check availability without printing, logging, or copying credential values.
 
@@ -41,7 +41,7 @@ Determine:
 
 - target subfolder;
 - combined instruction Markdown path, or compatibility codebook plus optional prose paths;
-- runtime: `codex`, `claude`, or `both`;
+- target session: Codex, Claude Code, or both (mapped internally to `--runtime`);
 - optional output JSON Schema;
 - optional default route override.
 
@@ -105,7 +105,7 @@ python3 <skill-root>/scripts/create_workspace.py \
   --runtime both
 ```
 
-The script copies the template, installs the selected runtime definitions, writes the combined instruction, extracts its codebook mirror, configures the project, and validates their equality.
+The script copies the template, installs the selected session definitions, writes the combined instruction, extracts its codebook mirror, configures the project, and validates their equality.
 
 ## Routing contract
 
@@ -136,7 +136,7 @@ The generated package includes:
 - `direct_api`, `local_agent`, and `online_agent` workflows;
 - standalone Codex and Claude project instructions;
 - the preserved research-tools implementation for online search, retrieval, caching, and archival, plus a separate local-document ingester;
-- a one-question `inquiry.py` entry point and cross-runtime `batch.py` launcher over the same execution core;
+- a one-question `inquiry.py` entry point and cross-session `batch.py` launcher over the same execution core;
 - progress, retry, prompt, session, provenance, research-report, and validation artifacts;
 - an optional one-call API coder that is disabled by default and is not an agent;
 - `.env.example` without credentials;
@@ -148,11 +148,11 @@ The generated Codex project defaults to `workspace-write` with network access an
 
 The launchers must not bypass these protections by default. `--unsafe-unattended` is the only opt-in bypass and is appropriate only inside an externally isolated container or virtual machine. Make this distinction prominent in generated and repository documentation. Permission settings do not supply credentials or eliminate prompt-injection and data-egress risks; recommend provider-scoped keys and non-sensitive workspaces.
 
-## Cross-runtime consistency
+## Cross-session consistency
 
 Treat `prompts/workflows/*.md` as the research behavioral source of truth. The workflow files preserve the complete search, retrieval, archival, gap, and freeze contracts; `task_instruction.md` only dispatches to them. The standalone Codex or Claude session must execute the selected workflow itself and must not launch child agents. The optional API coding prompt is separate under `prompts/coder/` and must not be registered as an agent.
 
-Read [agent-packaging.md](references/agent-packaging.md) when changing runtime packaging.
+Read [agent-packaging.md](references/agent-packaging.md) when changing session packaging.
 Read [prompt-preservation.md](references/prompt-preservation.md) before modifying a workflow prompt.
 
 ## Verification

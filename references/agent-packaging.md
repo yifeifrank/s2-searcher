@@ -1,4 +1,4 @@
-# Runtime Packaging
+# Session Packaging
 
 The generated package supports Codex and Claude as standalone research sessions. It does not register child-agent roles.
 
@@ -28,7 +28,7 @@ The generated project exposes the research-tools workflow in:
 - `.agents/skills/research-tools/` for Codex;
 - `.claude/skills/research-tools/` for Claude Code.
 
-Both wrappers call the same `tools/research_tools.py` implementation. Local fixed-corpus materialization uses `tools/local_ingest.py`, after which the same archive command validates citations. Never fork runtime-specific tool implementations silently.
+Both wrappers call the same `tools/research_tools.py` implementation. Local fixed-corpus materialization uses `tools/local_ingest.py`, after which the same archive command validates citations. Never fork session-specific tool implementations silently.
 
 ## Execution ownership
 
