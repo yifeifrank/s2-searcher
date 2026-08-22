@@ -66,7 +66,15 @@ ln -s /absolute/path/to/s2-forge/skills/research-workspace-builder \
 
 For Claude Code, install the same directory under `~/.claude/skills/research-workspace-builder`. Reload the runtime after installation.
 
-## Five-minute example
+## Start with one prompt
+
+After installing the skill, a beginner can ask an agent:
+
+> Use Research Workspace Builder to create an Inquiry workspace for this question: What explains variation in legislative oversight across democracies? Use Firecrawl for search and Exa for retrieval, preserve full sources and line-cited evidence, keep safe permissions, and run a dry check before asking me to approve live research.
+
+For a repeated-case project, describe the research goal, cases, fields, and source rules in prose. The agent should draft the instruction, codebook, and manifest, explain them in plain language, and wait for approval before a live batch. The [no-code getting-started guide](docs/getting-started.md) provides copyable prompts for Inquiry, Study, local documents, pilots, review, and resumption.
+
+## Manual CLI example
 
 Create an Inquiry-first workspace and prepare one question without model or web calls:
 
@@ -104,13 +112,13 @@ python3 batch.py \
   --dry-run
 ```
 
-Copy `.env.example` to `.env`, configure only the providers you use, and remove `--dry-run` for a live batch. The online defaults—40 searches and 3,600 seconds—are generous ceilings, not targets, and can be changed per task or manifest row.
+Copy `.env.example` to `.env`, configure only the providers you use, and remove `--dry-run` for a live batch. The sample configuration uses Firecrawl for search and Exa for retrieval, with cross-provider fallbacks. The online defaults—40 searches and 3,600 seconds—are generous ceilings, not targets, and can be changed per task or manifest row.
 
 A reproducible, credential-free contract and route snapshot is included under [examples/elite-biography-dry-run](examples/elite-biography-dry-run/README.md).
 
-## Use your own task
+## Manual CLI: use your own task
 
-Put prose requirements and a fenced JSON object beneath `## Codebook` in one Markdown file, then run:
+Agent-first users can describe the research design in ordinary language and let the skill create these inputs. For manual use, put prose requirements and a fenced JSON object beneath `## Codebook` in one Markdown file, then run:
 
 ```bash
 python3 scripts/create_workspace.py \

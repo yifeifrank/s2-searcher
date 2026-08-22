@@ -64,7 +64,7 @@ python3 -m pip install -r requirements.txt
 
 On Windows, activate with `.venv\\Scripts\\activate`.
 
-Copy `.env.example` to `.env` and fill only the services you intend to use. Never commit `.env`.
+Copy `.env.example` to `.env` and fill only the services you intend to use. Never commit `.env`. The sample configuration recommends Firecrawl for search and Exa for retrieval. Check the variables without network calls using `python3 tools/provider_smoke_check.py`, then add `--live` for one small end-to-end provider test.
 
 For `direct_api`, set:
 
@@ -78,7 +78,7 @@ The API route uses the OpenAI Python client and the Responses API interface. A c
 
 For the optional post-research coder, set `EVIDENCE_CODER_API_KEY`, `EVIDENCE_CODER_BASE_URL`, and `EVIDENCE_CODER_MODEL`, then put `coder_mode: api` in a task contract or pass `--coder-mode api`. It is disabled by default, makes exactly one model request, and does not create a coder agent.
 
-For `online_agent`, configure at least one search backend. Retrieval defaults to Jina and can fall back to Exa or direct HTTP extraction.
+For `online_agent`, configure at least one search backend. The sample uses Firecrawl search with Exa search fallback, then Exa retrieval with Firecrawl fallback. Edit the backend variables when you prefer Serper or Jina. Direct HTTP retrieval remains available as an explicit option, but it is not a default because Claude's provider-domain network allow-list does not permit arbitrary destination domains.
 
 ## 3. Start from this folder
 

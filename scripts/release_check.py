@@ -35,6 +35,7 @@ def scan_public_tree() -> None:
     secret_patterns = (
         re.compile(r"sk-[A-Za-z0-9_-]{20,}"),
         re.compile(r"fc-[A-Za-z0-9_-]{20,}"),
+        re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"),
         re.compile(r"[A-Za-z0-9_-]{32,}\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}"),
     )
     private_markers = (
@@ -220,8 +221,10 @@ def validate_release_archive() -> None:
             names = archive.namelist()
         for required in (
             "research-workspace-builder/SKILL.md",
+            "research-workspace-builder/docs/getting-started.md",
             "research-workspace-builder/assets/workspace-template/inquiry.py",
             "research-workspace-builder/assets/workspace-template/inputs/inquiry_instruction.md",
+            "research-workspace-builder/assets/workspace-template/tools/provider_smoke_check.py",
         ):
             if required not in names:
                 raise SystemExit(f"Release archive missing {required}")

@@ -21,6 +21,8 @@ from urllib.request import Request, urlopen, build_opener, ProxyHandler
 
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+DEFAULT_SEARCH_BACKEND = "firecrawl"
+DEFAULT_RETRIEVER_BACKEND = "exa"
 
 
 def _load_project_env() -> None:
@@ -466,12 +468,16 @@ def search_firecrawl(query: str, num_results: int) -> list[dict[str, str]]:
     if not api_key:
         raise RuntimeError("FIRECRAWL_API_KEY is required for backend=firecrawl")
     data = http_json(
-        "https://api.firecrawl.dev/v1/search",
+        "https://api.firecrawl.dev/v2/search",
         method="POST",
         headers={"Authorization": f"Bearer {api_key}"},
-        payload={"query": query, "limit": num_results},
+        payload={"query": query, "limit": num_results, "sources": ["web"]},
     )
-    items = data.get("data") or data.get("results") or []
+    payload = data.get("data") or data.get("results") or []
+    if isinstance(payload, dict):
+        items = payload.get("web") or []
+    else:
+        items = payload
     results: list[dict[str, str]] = []
     for item in items[:num_results]:
         results.append(
@@ -543,7 +549,7 @@ def retrieve_firecrawl(url: str, timeout: int) -> tuple[str, str]:
     if not api_key:
         raise RuntimeError("FIRECRAWL_API_KEY is required for backend=firecrawl")
     data = http_json(
-        "https://api.firecrawl.dev/v1/scrape",
+        "https://api.firecrawl.dev/v2/scrape",
         method="POST",
         headers={"Authorization": f"Bearer {api_key}"},
         payload={"url": url, "formats": ["markdown"]},
@@ -695,7 +701,7 @@ def command_search(args: argparse.Namespace) -> int:
         query = args.query.strip()
     if not query:
         raise SystemExit("search requires --query or --search-intent")
-    primary = args.backend or os.getenv("SEARCH_API_BACKEND", "serper")
+    primary = args.backend or os.getenv("SEARCH_API_BACKEND", DEFAULT_SEARCH_BACKEND)
     backends = backend_chain(primary, os.getenv("SEARCH_API_FALLBACKS"))
     last_error = None
     for backend in backends:
@@ -777,7 +783,7 @@ def command_retrieve(args: argparse.Namespace) -> int:
         log_action(paths, {"action": "retrieve", "status": "success", "backend": payload["backend"], "url": url, "cache_hit": True, "source": "global"})
         print(json.dumps(payload, ensure_ascii=False))
         return 0
-    primary = args.backend or os.getenv("WEB_RETRIEVER_BACKEND", "jina")
+    primary = args.backend or os.getenv("WEB_RETRIEVER_BACKEND", DEFAULT_RETRIEVER_BACKEND)
     backends = backend_chain(primary, os.getenv("WEB_RETRIEVER_FALLBACKS"))
     last_error = None
     for backend in backends:

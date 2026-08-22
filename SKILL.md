@@ -1,6 +1,6 @@
 ---
 name: research-workspace-builder
-description: Create a standalone research workspace with auditable local and online evidence, routing, batching, caching, archiving, and validation. Use Study mode for one protocol or codebook applied across many targets, or Inquiry mode for one substantive question without a user-defined codebook or manifest. Use when the user asks to scaffold, generate, install, migrate, or standardize a reusable research workspace, run repeated case research, or preserve inspectable sources and line-cited evidence for an open-ended inquiry. Do not use for simple fact lookups that do not need an evidence archive.
+description: Create a standalone research workspace from an ordinary-language question or repeated-case study description, with auditable local and online evidence, routing, batching, caching, archiving, and validation. Use Study mode for one protocol applied across many targets, or Inquiry mode for one substantive question without a user-defined codebook or manifest. Use when the user asks an agent to scaffold, run, migrate, or standardize reusable research, preserve inspectable sources and line-cited evidence, or turn a prose study design into a codebook and case manifest. Do not use for simple fact lookups that do not need an evidence archive.
 ---
 
 # Research Workspace Builder
@@ -10,6 +10,7 @@ Requirements: Python 3.10+, Codex CLI and/or Claude Code, and at least one confi
 Create a self-contained research task-pack inside a subfolder chosen by the user. The generated package must remain general-purpose: the user's question or codebook defines the domain, while agent prompts, routing, evidence storage, and execution mechanics remain generic.
 
 Read [design-lineage.md](references/design-lineage.md) when explaining how the generated workflow relates to the source article or when changing its architecture.
+Read [getting-started.md](docs/getting-started.md) when a user needs beginner-oriented setup, provider configuration, input examples, or artifact interpretation.
 
 ## Work modes
 
@@ -20,9 +21,19 @@ Both modes share `tasks/_global_cache/` as a workspace source library. A later t
 
 Every generated workspace retains both entry points. `--inquiry` only supplies a useful initial contract when the user has no codebook yet; it does not remove Study mode.
 
+## Agent-first interface
+
+Accept a beginner's ordinary-language research description as sufficient input. Carry out scaffolding, file creation, provider selection, dry runs, and validation instead of returning terminal instructions for the user to execute.
+
+For Inquiry mode, turn the user's question and scope into the existing one-question entry point. For Study mode, draft the combined Markdown instruction, embedded JSON codebook, and CSV or JSON manifest from the user's prose. Summarize the proposed unit of analysis, fields, allowed values, missingness rules, source priorities, and case count for substantive approval before a live batch.
+
+Ask only for missing choices that would materially change the result. Infer the current runtime when possible and choose a sensible workspace location when the user has no preference. Run a dry check before live research. When the user approves the prepared task, resume that same task for the live run instead of recreating or overwriting it. Launch live model or provider calls only when the user authorizes an operational run.
+
+Never ask a user to paste provider keys into a chat prompt. Configure Firecrawl search with Exa fallback and Exa retrieval with Firecrawl fallback by default; do not add direct HTTP as a default because Claude's network allow-list does not permit arbitrary destination domains. Create credential placeholders when needed, and tell the user where to provision `FIRECRAWL_API_KEY` and `EXA_API_KEY` through a local secret mechanism. Check availability without printing, logging, or copying credential values.
+
 ## Study-mode input
 
-Prefer one user-supplied Markdown file containing prose instructions and a `## Codebook` section with one or more fenced JSON objects. The prose defines research/coding requirements; the JSON chunks jointly define output fields and format. Top-level keys must be unique across chunks. The builder extracts their merged object to `inputs/codebook.json`, and validation requires exact equality.
+Prefer one Markdown file containing prose instructions and a `## Codebook` section with one or more fenced JSON objects. The user may supply it, or the agent may create it from an approved ordinary-language study design. The prose defines research/coding requirements; the JSON chunks jointly define output fields and format. Top-level keys must be unique across chunks. The builder extracts their merged object to `inputs/codebook.json`, and validation requires exact equality.
 
 For compatibility, accept a standalone JSON codebook with optional separate prose Markdown; the builder combines them into the same `inputs/instruction.md` contract. Accept the bundled elite-biography example only when explicitly requested.
 

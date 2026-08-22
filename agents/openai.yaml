@@ -1,7 +1,7 @@
 interface:
   display_name: "Research Workspace Builder"
-  short_description: "Build auditable Study or Inquiry workspaces"
-  default_prompt: "Create an evidence-preserving research workspace for either a repeated-case study or one open-ended inquiry."
+  short_description: "Build research workspaces from plain-language goals"
+  default_prompt: "Use $research-workspace-builder to turn my question or repeated-case study description into an auditable workspace and handle setup, dry-run validation, and evidence preservation for me."
 
 policy:
   allow_implicit_invocation: true
