@@ -2,7 +2,7 @@
 
 Research Workspace Builder is a Codex and Claude Code skill that creates self-contained, auditable research workspaces. Each task uses one standalone session to inspect local documents or search the web, cache full source material, archive line-cited evidence, write a research report, and validate the frozen evidence package.
 
-This subskill is an initial `v0.1.0` friend preview by Yifei Zhu. Its conceptual framework is described in the publicly available preprint [“Agentic Framework for Political Biography Extraction”](https://arxiv.org/abs/2603.18010), which remains under review.
+This standalone skill is an initial `v0.1.0` friend preview by Yifei Zhu. It is also the first skill curated by [S² Forge](https://github.com/yifeifrank/s2-forge). Its conceptual framework is described in the publicly available preprint [“Agentic Framework for Political Biography Extraction”](https://arxiv.org/abs/2603.18010), which remains under review.
 
 ## Two work modes, one evidence system
 
@@ -56,11 +56,15 @@ python3 -m pip install -r assets/workspace-template/requirements.txt
 
 ## Install the skill
 
-Clone the S2 Forge collection, then copy or symlink this subskill into your agent's skill directory:
+Ask your agent to install the skill from its canonical repository:
+
+> Install Research Workspace Builder from `https://github.com/yifeifrank/research-workspace-builder`, keep the repository root as the canonical skill directory, and tell me when I need to reload the session.
+
+For a manual installation, clone this repository and copy or symlink its root into your agent's skill directory:
 
 ```bash
-git clone https://github.com/yifeifrank/s2-forge.git
-ln -s /absolute/path/to/s2-forge/skills/research-workspace-builder \
+git clone https://github.com/yifeifrank/research-workspace-builder.git
+ln -s /absolute/path/to/research-workspace-builder \
   ~/.codex/skills/research-workspace-builder
 ```
 

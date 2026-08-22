@@ -9,6 +9,7 @@ All notable changes are documented here. This project follows semantic versionin
 - Added an agent-first, no-code beginner guide, a credential-safe provider smoke check, and a recommended Firecrawl-search/Exa-retrieval sample configuration.
 - Updated Firecrawl search and scrape calls to the current v2 endpoints while retaining response compatibility with the earlier search shape.
 - Adopted session terminology in user-facing documentation and clarified the repository's evidence-workspace description.
+- Established this repository as the skill's canonical standalone source and retained S² Forge as its collection catalog.
 
 ## [0.1.0] - 2026-08-12
 

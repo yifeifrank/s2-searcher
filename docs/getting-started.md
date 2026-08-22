@@ -1,4 +1,4 @@
-# Getting started with S² Forge—without writing code
+# Getting started with Research Workspace Builder—without writing code
 
 Research Workspace Builder is meant to be operated through an agent. After installing the skill, describe the research you want to conduct in ordinary language. The agent creates the files, selects the work mode, prepares the workspace, checks the configuration, and validates the results.
 
@@ -23,11 +23,11 @@ If some details are missing, the agent should ask only the questions that would 
 
 Use your agent's skill installer or skill-management interface to install `research-workspace-builder` from:
 
-> https://github.com/yifeifrank/s2-forge/tree/main/skills/research-workspace-builder
+> https://github.com/yifeifrank/research-workspace-builder
 
 If your session accepts natural-language installation requests, you can say:
 
-> Install the Research Workspace Builder skill from the S² Forge repository at `yifeifrank/s2-forge`. Use the skill under `skills/research-workspace-builder`, keep that directory as the canonical copy, and tell me when I need to reload the session.
+> Install Research Workspace Builder from `https://github.com/yifeifrank/research-workspace-builder`. Keep the repository root as the canonical skill directory, and tell me when I need to reload the session.
 
 Reload Codex or Claude Code after installation if the skill does not appear immediately.
 
