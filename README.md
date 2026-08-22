@@ -1,8 +1,10 @@
-# Research Workspace Builder
+# S² Searcher
 
-Research Workspace Builder is a Codex and Claude Code skill that creates self-contained, auditable research workspaces. Each task uses one standalone session to inspect local documents or search the web, cache full source material, archive line-cited evidence, write a research report, and validate the frozen evidence package.
+**Search once or study at scale—while preserving every source, citation, conflict, and gap.**
 
-This standalone skill is an initial `v0.1.0` friend preview by Yifei Zhu. It is also the first skill curated by [S² Forge](https://github.com/yifeifrank/s2-forge). Its conceptual framework is described in the publicly available preprint [“Agentic Framework for Political Biography Extraction”](https://arxiv.org/abs/2603.18010), which remains under review.
+S² Searcher is an evidence-preserving research agent for Codex and Claude Code. It turns open-ended questions and repeated-case study designs into self-contained, auditable research workspaces. Each task uses one standalone session to inspect local documents or search the web, cache full source material, archive line-cited evidence, write a research report, and validate the frozen evidence package.
+
+This standalone skill, previously named Research Workspace Builder, is an initial `v0.1.0` friend preview by Yifei Zhu. It is also the first skill curated by [S² Forge](https://github.com/yifeifrank/s2-forge). Its conceptual framework is described in the publicly available preprint [“Agentic Framework for Political Biography Extraction”](https://arxiv.org/abs/2603.18010), which remains under review.
 
 ## Two work modes, one evidence system
 
@@ -58,23 +60,23 @@ python3 -m pip install -r assets/workspace-template/requirements.txt
 
 Ask your agent to install the skill from its canonical repository:
 
-> Install Research Workspace Builder from `https://github.com/yifeifrank/research-workspace-builder`, keep the repository root as the canonical skill directory, and tell me when I need to reload the session.
+> Install S² Searcher from `https://github.com/yifeifrank/s2-searcher`, keep the repository root as the canonical skill directory, and tell me when I need to reload the session.
 
 For a manual installation, clone this repository and copy or symlink its root into your agent's skill directory:
 
 ```bash
-git clone https://github.com/yifeifrank/research-workspace-builder.git
-ln -s /absolute/path/to/research-workspace-builder \
-  ~/.codex/skills/research-workspace-builder
+git clone https://github.com/yifeifrank/s2-searcher.git
+ln -s /absolute/path/to/s2-searcher \
+  ~/.codex/skills/s2-searcher
 ```
 
-For Claude Code, install the same directory under `~/.claude/skills/research-workspace-builder`. Reload the session after installation.
+For Claude Code, install the same directory under `~/.claude/skills/s2-searcher`. Reload the session after installation. Existing users should rename an old `research-workspace-builder` installation directory to `s2-searcher` after updating; GitHub redirects the former repository URL, but local skill discovery may depend on the directory name.
 
 ## Start with one prompt
 
 After installing the skill, a beginner can ask an agent:
 
-> Use Research Workspace Builder to create an Inquiry workspace for this question: What explains variation in legislative oversight across democracies? Use Firecrawl for search and Exa for retrieval, preserve full sources and line-cited evidence, keep safe permissions, and run a dry check before asking me to approve live research.
+> Use S² Searcher to create an Inquiry workspace for this question: What explains variation in legislative oversight across democracies? Use Firecrawl for search and Exa for retrieval, preserve full sources and line-cited evidence, keep safe permissions, and run a dry check before asking me to approve live research.
 
 For a repeated-case project, describe the research goal, cases, fields, and source rules in prose. The agent should draft the instruction, codebook, and manifest, explain them in plain language, and wait for approval before a live batch. The [no-code getting-started guide](docs/getting-started.md) provides copyable prompts for Inquiry, Study, local documents, pilots, review, and resumption.
 
@@ -149,7 +151,7 @@ Build a deterministic archive to send directly to a friend:
 python3 scripts/package_release.py --output-dir dist
 ```
 
-The generated `dist/research-workspace-builder.skill` excludes Git metadata,
+The generated `dist/s2-searcher.skill` excludes Git metadata,
 credential files, bytecode, and caches. CI also inspects this archive.
 
 ## Citation

@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ARCHIVE_ROOT = "research-workspace-builder"
+ARCHIVE_ROOT = "s2-searcher"
 EXCLUDED_DIRS = {".git", "__pycache__", "dist", "node_modules"}
 EXCLUDED_FILES = {".env", ".DS_Store"}
 

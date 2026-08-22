@@ -4,6 +4,7 @@ All notable changes are documented here. This project follows semantic versionin
 
 ## [Unreleased]
 
+- Renamed Research Workspace Builder to S² Searcher, including the canonical repository, skill ID, installation paths, and deterministic release archive.
 - Added Inquiry mode as a single-question entry point over the existing standalone task engine; the current manifest path is documented as Study mode.
 - Exposed `tasks/_global_cache/` as a searchable workspace source library and added opt-in sharing for ingested local documents.
 - Added an agent-first, no-code beginner guide, a credential-safe provider smoke check, and a recommended Firecrawl-search/Exa-retrieval sample configuration.

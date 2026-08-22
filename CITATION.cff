@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "Please cite this software release when using the implementation. Cite the related arXiv preprint for the research framework."
-title: "Research Workspace Builder"
+title: "S² Searcher"
 type: software
 version: 0.1.0
 date-released: "2026-08-12"
@@ -8,9 +8,9 @@ authors:
   - family-names: "Zhu"
     given-names: "Yifei"
 license: Apache-2.0
-repository-code: "https://github.com/yifeifrank/research-workspace-builder"
-url: "https://github.com/yifeifrank/research-workspace-builder"
-abstract: "An agent skill that turns social science questions and repeated-case study designs into auditable research workspaces with cached sources, line-cited evidence, validation, and resumable execution."
+repository-code: "https://github.com/yifeifrank/s2-searcher"
+url: "https://github.com/yifeifrank/s2-searcher"
+abstract: "S² Searcher is an agent skill that turns social science questions and repeated-case study designs into auditable research workspaces with cached sources, line-cited evidence, validation, and resumable execution."
 keywords:
   - research agents
   - evidence provenance

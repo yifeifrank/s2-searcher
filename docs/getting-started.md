@@ -1,6 +1,6 @@
-# Getting started with Research Workspace Builder—without writing code
+# Getting started with S² Searcher—without writing code
 
-Research Workspace Builder is meant to be operated through an agent. After installing the skill, describe the research you want to conduct in ordinary language. The agent creates the files, selects the work mode, prepares the workspace, checks the configuration, and validates the results.
+S² Searcher is meant to be operated through an agent. After installing the skill, describe the research you want to conduct in ordinary language. The agent creates the files, selects the work mode, prepares the workspace, checks the configuration, and validates the results.
 
 You do not need to write Python, JSON, CSV, or shell commands.
 
@@ -21,13 +21,13 @@ If some details are missing, the agent should ask only the questions that would 
 
 ## 1. Install the skill once
 
-Use your agent's skill installer or skill-management interface to install `research-workspace-builder` from:
+Use your agent's skill installer or skill-management interface to install `s2-searcher` from:
 
-> https://github.com/yifeifrank/research-workspace-builder
+> https://github.com/yifeifrank/s2-searcher
 
 If your session accepts natural-language installation requests, you can say:
 
-> Install Research Workspace Builder from `https://github.com/yifeifrank/research-workspace-builder`. Keep the repository root as the canonical skill directory, and tell me when I need to reload the session.
+> Install S² Searcher from `https://github.com/yifeifrank/s2-searcher`. Keep the repository root as the canonical skill directory, and tell me when I need to reload the session.
 
 Reload Codex or Claude Code after installation if the skill does not appear immediately.
 
@@ -58,7 +58,7 @@ Use Inquiry mode when you have one question or several questions that do not sha
 
 Copy this prompt and replace the bracketed text:
 
-> Use Research Workspace Builder to create an Inquiry workspace for me.
+> Use S² Searcher to create an Inquiry workspace for me.
 >
 > My question is: [research question].
 >
@@ -88,7 +88,7 @@ You may describe the design entirely in prose. The agent should translate it int
 
 Copy and adapt this prompt:
 
-> Use Research Workspace Builder to design a repeated-case Study.
+> Use S² Searcher to design a repeated-case Study.
 >
 > Research goal: [what the study should establish].
 >

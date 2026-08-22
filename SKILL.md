@@ -1,9 +1,9 @@
 ---
-name: research-workspace-builder
-description: Create a standalone research workspace from an ordinary-language question or repeated-case study description, with auditable local and online evidence, routing, batching, caching, archiving, and validation. Use Study mode for one protocol applied across many targets, or Inquiry mode for one substantive question without a user-defined codebook or manifest. Use when the user asks an agent to scaffold, run, migrate, or standardize reusable research, preserve inspectable sources and line-cited evidence, or turn a prose study design into a codebook and case manifest. Do not use for simple fact lookups that do not need an evidence archive.
+name: s2-searcher
+description: Turn an ordinary-language social science question or repeated-case study design into a reusable research workspace with auditable local and online evidence, routing, batching, caching, archiving, and validation. Use Study mode for one protocol applied across many targets, or Inquiry mode for one substantive question without a user-defined codebook or manifest. Use when the user asks an agent to conduct evidence-preserving research, scaffold or migrate a reusable workspace, preserve inspectable sources and line-cited evidence, or turn a prose study design into a codebook and case manifest. Do not use for simple fact lookups that do not need an evidence archive.
 ---
 
-# Research Workspace Builder
+# S² Searcher
 
 Requirements: Python 3.10+, Codex CLI and/or Claude Code, and at least one configured search backend for online research.
 

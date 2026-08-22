@@ -80,7 +80,7 @@ def check_release_metadata() -> None:
         if marker not in citation:
             raise SystemExit(f"CITATION.cff missing marker: {marker}")
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-    if not skill.startswith("---\nname: research-workspace-builder\n"):
+    if not skill.startswith("---\nname: s2-searcher\n"):
         raise SystemExit("SKILL.md frontmatter is missing or malformed")
 
 
@@ -103,7 +103,7 @@ def check_example_snapshot() -> None:
 
 
 def validate_fresh_workspace() -> None:
-    with tempfile.TemporaryDirectory(prefix="research-workspace-release-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="s2-searcher-release-") as temporary:
         workspace = Path(temporary) / "workspace"
         run(
             sys.executable,
@@ -210,7 +210,7 @@ def validate_fresh_workspace() -> None:
 
 
 def validate_release_archive() -> None:
-    with tempfile.TemporaryDirectory(prefix="research-workspace-package-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="s2-searcher-package-") as temporary:
         output = run(
             sys.executable,
             str(ROOT / "scripts/package_release.py"),
@@ -220,11 +220,11 @@ def validate_release_archive() -> None:
         with zipfile.ZipFile(archive_path) as archive:
             names = archive.namelist()
         for required in (
-            "research-workspace-builder/SKILL.md",
-            "research-workspace-builder/docs/getting-started.md",
-            "research-workspace-builder/assets/workspace-template/inquiry.py",
-            "research-workspace-builder/assets/workspace-template/inputs/inquiry_instruction.md",
-            "research-workspace-builder/assets/workspace-template/tools/provider_smoke_check.py",
+            "s2-searcher/SKILL.md",
+            "s2-searcher/docs/getting-started.md",
+            "s2-searcher/assets/workspace-template/inquiry.py",
+            "s2-searcher/assets/workspace-template/inputs/inquiry_instruction.md",
+            "s2-searcher/assets/workspace-template/tools/provider_smoke_check.py",
         ):
             if required not in names:
                 raise SystemExit(f"Release archive missing {required}")
