@@ -16,11 +16,24 @@
     "recommended_budgets"
   ],
   "properties": {
-    "router_version": {"type": "string"},
-    "task_id": {"type": "string"},
-    "selected_route": {"enum": ["direct_api", "local_agent", "online_agent"]},
+    "router_version": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "selected_route": {
+      "enum": [
+        "direct_api",
+        "local_agent",
+        "online_agent"
+      ]
+    },
     "workflow_prompt": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "enum": [
         null,
         "prompts/workflows/local_agent.md",
@@ -28,13 +41,48 @@
         "prompts/workflows/online_agent_codex_native.md"
       ]
     },
-    "difficulty_profile": {"enum": ["light", "standard", "intensive", "extreme"]},
-    "coder_mode": {"enum": ["none", "api"]},
-    "permission_mode": {"enum": ["none", "workspace-write", "danger-full-access"]},
-    "factors": {"type": "object"},
-    "reasons": {"type": "array", "items": {"type": "string"}},
-    "explicit_override": {"type": "boolean"},
-    "recommended_budgets": {"type": "object"}
+    "difficulty_profile": {
+      "enum": [
+        "light",
+        "standard",
+        "intensive",
+        "extreme"
+      ]
+    },
+    "coder_mode": {
+      "enum": [
+        "none",
+        "api"
+      ]
+    },
+    "deliverable": {
+      "enum": [
+        "research_report",
+        "structured"
+      ]
+    },
+    "permission_mode": {
+      "enum": [
+        "none",
+        "workspace-write",
+        "danger-full-access"
+      ]
+    },
+    "factors": {
+      "type": "object"
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "explicit_override": {
+      "type": "boolean"
+    },
+    "recommended_budgets": {
+      "type": "object"
+    }
   },
   "additionalProperties": false
 }

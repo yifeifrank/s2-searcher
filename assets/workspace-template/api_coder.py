@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import os
 from datetime import datetime, timezone
@@ -68,6 +70,13 @@ def execute(task_root: Path, framework_root: Path) -> dict[str, Any]:
         raise RuntimeError("api_coder.py is only for a frozen local_agent or online_agent research package")
     if decision.get("coder_mode") != "api":
         raise RuntimeError("route_decision.json does not enable coder_mode=api")
+    from validate import research_check
+    diagnostics = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(diagnostics):
+            research_check(task_root)
+    except SystemExit as exc:
+        raise RuntimeError(diagnostics.getvalue().strip()) from exc
 
     instruction_path = resolve_input(str(contract["instructions_path"]), framework_root, task_root)
     codebook_path = resolve_input(str(contract["codebook_path"]), framework_root, task_root)

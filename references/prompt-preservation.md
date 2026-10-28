@@ -16,3 +16,8 @@ The active workflows under `prompts/workflows/` preserve the source framework's 
 The native path does not weaken planning, query refinement, source hierarchy, identity checking, corroboration, conflict handling, or the three-attempt gap rule. It changes the evidence level honestly: observable URLs are traceable and optional snapshots are preserved, but the system does not fabricate line-addressable citations for native context the launcher cannot see.
 
 The dated pre-simplification backup retains the former prompts and historical source snapshots. Active workflow changes should preserve the substantive research and verification requirements above.
+
+The local-builder reconciliation adds explicit same-session structured Study
+deliverables as an opt-in completion choice. It preserves the substantive search
+method and the native workflow's launcher-owned post-turn capture/validation.
+Quotation and immutable-source checks strengthen the existing evidence contract.

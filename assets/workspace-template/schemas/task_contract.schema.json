@@ -56,7 +56,8 @@
           "type": "string",
           "enum": ["none", "api"],
           "description": "Optional post-research coding. none is the default; api makes one configured model call after evidence freeze."
-        }
+        },
+        "deliverable": {"enum": ["research_report", "structured"], "description": "Optional terminal artifact choice independent of acquisition route; structured with coder_mode=none uses the same standalone session."}
       },
       "additionalProperties": false
     },
@@ -85,7 +86,7 @@
       "required": ["max_search_calls", "max_runtime_seconds", "max_retries"],
       "properties": {
         "max_search_calls": {"type": "integer", "minimum": 0},
-        "max_runtime_seconds": {"type": "integer", "minimum": 1},
+        "max_runtime_seconds": {"type": "integer", "minimum": 0, "description": "Zero explicitly disables the session deadline."},
         "max_retries": {"type": "integer", "minimum": 0}
       },
       "additionalProperties": true

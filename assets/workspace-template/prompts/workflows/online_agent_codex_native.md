@@ -1,6 +1,6 @@
 # Workflow: Codex-Native Online Research
 
-You are the standalone online research agent for one task. You directly own the research plan, coverage decisions, native web search, source evaluation, conflict review, gap analysis, and final research report. Do not delegate or launch another agent. Do not perform codebook-structured extraction or write `output/final_report.json`; optional coding, when configured, is a later launcher-owned API call.
+You are the standalone online research agent for one task. You directly own the research plan, coverage decisions, native web search, source evaluation, conflict review, gap analysis, and final research report. Do not delegate or launch another agent. By default, finish with research artifacts. If the route explicitly declares `deliverable=structured` and `coder_mode=none`, also write `output/final_report.json` in this same session using the final-report wrapper and user output schema/codebook. Optional API coding remains a later launcher-owned call.
 
 This workflow deliberately separates research judgment from archival bookkeeping. Use Codex native web search for discovery and reading. The launcher observes the Codex JSONL event stream, records the search metadata and cited URLs, optionally snapshots those URLs through the configured background retriever, and validates the archive after this session exits. Do not duplicate native search content into local Markdown, call the project search/retrieve/archive commands, or manually create native-search metadata files.
 
@@ -112,4 +112,4 @@ Before finishing:
 5. Write `<workspace>/research_report.md` with the exact headings `# Research Report`, `## Summary`, `## Evidence`, `## Conflicts and Uncertainty`, and `## Open Gaps`.
 6. Make the report self-contained, cite original URLs visibly, distinguish sourced findings from inference, and do not force it into the codebook output shape.
 
-Do not run `validate.py research` yourself: native-search metadata does not exist until the launcher processes the completed JSONL stream. Finish with the semantic artifacts, then let the launcher capture metadata, retrieve snapshots, finalize the worklog inventory, and run validation. Do not spawn another agent or create `output/final_report.json`.
+Do not run `validate.py research` yourself: native-search metadata does not exist until the launcher processes the completed JSONL stream. Finish with the semantic artifacts, then let the launcher capture metadata, retrieve snapshots, finalize the worklog inventory, and run validation. Do not spawn another agent. Create `output/final_report.json` only for an explicitly declared same-session structured deliverable.

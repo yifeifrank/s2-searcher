@@ -141,6 +141,8 @@ python3 scripts/create_workspace.py \
 
 The detailed generated-workspace guide lives at [assets/workspace-template/README.md](assets/workspace-template/README.md).
 
+Generated launchers retain complete process logs on disk while keeping bounded output tails and event metadata in memory. Research HTTP helpers enforce a finite response-body cap before decoding or parsing, and report policy violations without truncating evidence or switching providers. See [I/O memory bounds](assets/workspace-template/README.md#io-memory-bounds) for defaults and overrides. These protections do not impose an operating-system memory limit on agent processes. Existing copied workspaces need the corresponding source updates; reinstalling the skill alone only changes future scaffolds.
+
 ## Tests and continuous integration
 
 Run the same release checks used by GitHub Actions:
@@ -171,3 +173,42 @@ The article is an arXiv preprint and remains under review; publication metadata 
 ## License
 
 Licensed under Apache-2.0. See [LICENSE](LICENSE).
+
+
+## Deliverable and evidence integrity
+
+The default agent deliverable is `research_report`. Set `deliverable=structured`
+in a Study manifest row (or `routing.deliverable` in a contract) to have the same
+standalone session also write `output/final_report.json`, using the final-report
+wrapper and the user's codebook/output schema. Keep `coder_mode=none` for this
+path. `coder_mode=api` still requests one separate, post-freeze extraction call.
+Inquiry remains research-only. Native search always leaves final validation to
+the launcher after source capture, including for structured deliverables.
+
+Every new task records hashes of its inputs, workflow controls and execution
+settings in `input_identity.json`. `--resume` checks those identities before
+writing task files. Changed inputs or unversioned legacy attempts require a new
+tasks directory; the launcher does not silently migrate them. Portable task IDs
+are unique without regard to case, and a directory lock prevents competing batch
+or Inquiry controllers from writing the same tasks directory.
+
+Successful tasks receive `completion_manifest.json`. A completed resume checks
+the sealed files and returns without another model call. Missing or changed
+sealed files are errors. These hashes detect byte changes; they do not establish
+factual accuracy or include externally stored runtime sessions. Results remain
+unreviewed drafts.
+
+Source refreshes create immutable cache revisions. Evidence records bind the
+page hash, exact cited lines and representation kind (`source_text`, `excerpt`,
+or `summary`). Original-source quotations must match captured source text;
+generated summaries cannot support such quotations. `tools/local_ingest.py`
+accepts `--source-url`, `--capture-backend` and `--content-kind` for external
+captures. `research_tools.py record-search` imports a saved JSON result artifact
+without making a search call. Local ingestion shares sources only when
+`--share-with-library` is explicitly supplied.
+
+Inquiry progress and result receipts live under
+`<tasks-dir>/.inquiry_status/<task-id>/`, outside the sealed task folder.
+Updating this skill changes future scaffolds; existing workspaces and active
+runs keep their copied controls. Upgrade inactive workspaces deliberately and
+use a fresh task namespace for the new identity format.

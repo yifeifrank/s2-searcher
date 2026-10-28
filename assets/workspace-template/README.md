@@ -212,3 +212,59 @@ Use `--retry-manifest` to write only failed or timed-out rows for later resumpti
 Inquiry tasks use the same per-task artifacts under `tasks/inquiries/<task_id>/`, plus `inquiry_progress.json` and `inquiry_result.json` instead of collection-level batch summaries.
 
 For unattended batches, the launcher also provides periodic progress heartbeats, per-stage process timeouts, full process-tree cleanup, Codex/Claude session references for `--resume`, token/error parsing, and zero-child-agent auditing. Auth and quota failures abort safely by default. Use `--api-failure-mode pause` only when you intentionally want quota failures to pause and retry after `--quota-pause-seconds`; authentication failures still abort. The optional API coder remains exactly one model request per row even when agent retries are enabled.
+
+### I/O memory bounds
+
+The launcher streams complete subprocess output to disk and retains a diagnostic tail plus incremental session, usage, warning, and child-agent audit metadata. Retries and resumes scan logs in bounded records rather than loading whole transcripts. Pretty JSON from direct API and coder helpers uses plain diagnostic mode; agent sessions require valid JSON event records. Oversized records and exhausted audit limits fail explicitly, retain the complete attempt log, and stop automatic retries.
+
+These positive integer settings may be inherited from the environment or supplied in `.env`:
+
+| Setting | Default | Maximum |
+| --- | ---: | ---: |
+| `RESEARCH_OUTPUT_TAIL_BYTES` | 262144 | 16777216 |
+| `RESEARCH_EVENT_RECORD_BYTES` | 4194304 | 67108864 |
+| `RESEARCH_EVENT_CHILD_LIMIT` | 4096 | 65536 |
+| `RESEARCH_HTTP_MAX_RESPONSE_BYTES` | 16777216 | A positive byte limit selected by the operator |
+
+The event record and child count limits also bound retained native-source and recovery-audit metadata. HTTP helpers check both declared and streamed response sizes before decoding or JSON parsing, reject non-identity content encodings, and stop without retry or provider fallback when a response violates the policy. Bodies and evidence are never silently truncated. Increase a bound only after inspecting the retained diagnostics and expected source size.
+
+These I/O bounds do not limit an agent's entire address space or arbitrary commands it launches. Use operating-system worker memory limits for that protection. Updating the installed skill affects future scaffolds; existing copied workspaces need their launcher and research tools updated separately.
+
+
+## Deliverable and evidence integrity
+
+The default agent deliverable is `research_report`. Set `deliverable=structured`
+in a Study manifest row (or `routing.deliverable` in a contract) to have the same
+standalone session also write `output/final_report.json`, using the final-report
+wrapper and the user's codebook/output schema. Keep `coder_mode=none` for this
+path. `coder_mode=api` still requests one separate, post-freeze extraction call.
+Inquiry remains research-only. Native search always leaves final validation to
+the launcher after source capture, including for structured deliverables.
+
+Every new task records hashes of its inputs, workflow controls and execution
+settings in `input_identity.json`. `--resume` checks those identities before
+writing task files. Changed inputs or unversioned legacy attempts require a new
+tasks directory; the launcher does not silently migrate them. Portable task IDs
+are unique without regard to case, and a directory lock prevents competing batch
+or Inquiry controllers from writing the same tasks directory.
+
+Successful tasks receive `completion_manifest.json`. A completed resume checks
+the sealed files and returns without another model call. Missing or changed
+sealed files are errors. These hashes detect byte changes; they do not establish
+factual accuracy or include externally stored runtime sessions. Results remain
+unreviewed drafts.
+
+Source refreshes create immutable cache revisions. Evidence records bind the
+page hash, exact cited lines and representation kind (`source_text`, `excerpt`,
+or `summary`). Original-source quotations must match captured source text;
+generated summaries cannot support such quotations. `tools/local_ingest.py`
+accepts `--source-url`, `--capture-backend` and `--content-kind` for external
+captures. `research_tools.py record-search` imports a saved JSON result artifact
+without making a search call. Local ingestion shares sources only when
+`--share-with-library` is explicitly supplied.
+
+Inquiry progress and result receipts live under
+`<tasks-dir>/.inquiry_status/<task-id>/`, outside the sealed task folder.
+Updating this skill changes future scaffolds; existing workspaces and active
+runs keep their copied controls. Upgrade inactive workspaces deliberately and
+use a fresh task namespace for the new identity format.

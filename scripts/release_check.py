@@ -176,7 +176,7 @@ def validate_fresh_workspace() -> None:
             (inquiry_task / "route_decision.json").read_text(encoding="utf-8")
         )
         inquiry_result = json.loads(
-            (inquiry_task / "inquiry_result.json").read_text(encoding="utf-8")
+            (inquiry_task.parent / ".inquiry_status" / inquiry_task.name / "inquiry_result.json").read_text(encoding="utf-8")
         )
         if inquiry_contract.get("metadata", {}).get("work_mode") != "inquiry":
             raise SystemExit("Inquiry dry run did not record its work mode")

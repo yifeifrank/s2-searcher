@@ -69,17 +69,8 @@ def ensure_empty_target(target: Path) -> None:
 
 def render_text_files(target: Path, project_name: str) -> None:
     replacements = {"__PROJECT_NAME__": project_name}
-    for path in target.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in {
-            ".md",
-            ".json",
-            ".toml",
-            ".yaml",
-            ".yml",
-            ".txt",
-            ".example",
-        }:
-            continue
+    # framework.json is configured through json.dumps, never text substitution.
+    for path in (target / "README.md",):
         text = path.read_text(encoding="utf-8")
         updated = text
         for old, new in replacements.items():
@@ -196,10 +187,13 @@ def main() -> None:
         except ValueError as exc:
             raise SystemExit(f"Cannot combine separate instruction/codebook inputs: {exc}") from exc
 
-    shutil.copytree(template, target, dirs_exist_ok=True)
-    (target / "inputs" / "instruction.md").write_text(
-        instruction_text.rstrip() + "\n", encoding="utf-8"
-    )
+    shutil.copytree(template, target, dirs_exist_ok=True, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+    project_name = args.project_name.strip() or target.name
+    render_text_files(target, project_name)
+    if args.instruction:
+        shutil.copy2(instruction_source, target / "inputs" / "instruction.md")
+    else:
+        (target / "inputs" / "instruction.md").write_text(instruction_text, encoding="utf-8")
     (target / "inputs" / "codebook.json").write_text(
         json.dumps(codebook, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
@@ -211,8 +205,6 @@ def main() -> None:
         output_schema_relpath = "schemas/user_output.schema.json"
         shutil.copy2(schema_source, target / output_schema_relpath)
 
-    project_name = args.project_name.strip() or target.name
-    render_text_files(target, project_name)
     remove_unused_runtime(target, args.runtime)
     configure_project(
         target=target,

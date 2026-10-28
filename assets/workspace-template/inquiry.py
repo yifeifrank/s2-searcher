@@ -139,7 +139,17 @@ def execution_args(args: argparse.Namespace, framework: dict) -> argparse.Namesp
 
 
 async def run(args: argparse.Namespace) -> int:
+    tasks_dir = Path(args.tasks_dir).expanduser()
+    if not tasks_dir.is_absolute():
+        tasks_dir = FRAMEWORK_ROOT / tasks_dir
+    tasks_dir.mkdir(parents=True, exist_ok=True)
+    with batch.batch_directory_lock(tasks_dir):
+        return await run_locked(args)
+
+
+async def run_locked(args: argparse.Namespace) -> int:
     batch.load_env(FRAMEWORK_ROOT / ".env")
+    batch.configure_output_limits()
     framework = json.loads((FRAMEWORK_ROOT / "framework.json").read_text(encoding="utf-8"))
     contract = inquiry_contract(args, framework)
     task_id = batch.safe_task_id({"task_id": contract.get("task_id")}, 0)
@@ -155,8 +165,9 @@ async def run(args: argparse.Namespace) -> int:
     ensure_task_target(task_root, contract, args.resume)
 
     runner_args = execution_args(args, framework)
-    progress = batch.Progress(task_root, [task_id])
-    progress.path = task_root / "inquiry_progress.json"
+    status_root = tasks_dir / ".inquiry_status" / task_id
+    progress = batch.Progress(status_root, [task_id])
+    progress.path = status_root / "inquiry_progress.json"
     registry = batch.ProcessRegistry()
     snapshots = batch.NativeSnapshotCoordinator()
     control = batch.BatchControl("abort", 900.0, 0.0, progress, registry)
@@ -187,7 +198,7 @@ async def run(args: argparse.Namespace) -> int:
     result["unsafe_unattended"] = bool(args.unsafe_unattended)
     successful = result.get("status") in {"pass", "resumed", "dry-run"}
     await progress.set_batch_state("complete" if successful else "incomplete", result=result)
-    batch.atomic_json(task_root / "inquiry_result.json", result)
+    batch.atomic_json(status_root / "inquiry_result.json", result)
     print(
         json.dumps(
             {

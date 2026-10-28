@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -10,6 +11,9 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 from tools.instruction_contract import extract_codebook
+from tools.research_tools import validate_quotation
+from tools.task_integrity import prepare_identity
+from router import route_contract
 
 
 ONLINE_WORKLOG_VERSION = "online-research-v1-20260812"
@@ -87,6 +91,8 @@ def validate_schema(instance: Any, schema_path: Path, check: Validation, label: 
         jsonschema.validate(instance, schema)
     except jsonschema.ValidationError as exc:
         check.errors.append(f"{label} schema validation failed: {exc.message}")
+    except jsonschema.SchemaError as exc:
+        check.errors.append(f"{label} has an invalid JSON Schema: {exc.message}")
 
 
 def resolve_contract_path(value: Any, framework_root: Path, task_root: Path) -> Path:
@@ -123,6 +129,7 @@ def project_check(root: Path) -> None:
         "schemas/final_report.schema.json",
         "schemas/evidence_record.schema.json",
         "schemas/searcher_worklog.schema.json",
+        "tools/task_integrity.py",
         "tools/research_tools.py",
         "tools/local_ingest.py",
         "tools/instruction_contract.py",
@@ -271,6 +278,10 @@ def evidence_check(task_root: Path, check: Validation) -> tuple[list[dict[str, A
         check.require(bool(key), f"Cache index row {position} has no cache_key")
         check.require(bool(relative), f"Cache index row {position} has no markdown_path")
         if key:
+            if key in indexed:
+                previous = indexed[key]
+                for field in ("page_sha256", "markdown_path", "canonical_url", "backend", "content_kind"):
+                    check.require(previous.get(field) == row.get(field), f"Conflicting cache identity for {key}: {field}")
             indexed[key] = row
         if relative:
             page = (task_root / relative).resolve()
@@ -280,6 +291,10 @@ def evidence_check(task_root: Path, check: Validation) -> tuple[list[dict[str, A
                 check.errors.append(f"Cache index row {position} escapes the task workspace: {relative}")
             else:
                 check.require(page.is_file(), f"Cache index row {position} refers to missing page: {relative}")
+                if page.is_file():
+                    expected = row.get("page_sha256")
+                    check.require(bool(expected) and hashlib.sha256(page.read_bytes()).hexdigest() == expected,
+                                  f"Cache index row {position} has missing or mismatched page_sha256")
                 indexed_pages.add(relative)
 
     actual_pages = sorted(
@@ -289,6 +304,7 @@ def evidence_check(task_root: Path, check: Validation) -> tuple[list[dict[str, A
     check.require(indexed_pages == set(actual_pages), "cache_index.jsonl does not exactly inventory cache/pages/*.md")
 
     for position, row in enumerate(evidence, 1):
+        validate_schema(row, Path(__file__).resolve().parent / "schemas/evidence_record.schema.json", check, f"Evidence row {position}")
         key = str(row.get("cache_key", "")).strip()
         start = row.get("start_line")
         end = row.get("end_line")
@@ -301,10 +317,24 @@ def evidence_check(task_root: Path, check: Validation) -> tuple[list[dict[str, A
         )
         entry = indexed.get(key, {})
         relative = str(entry.get("markdown_path", f"cache/pages/{key}.md"))
-        page = task_root / relative
-        if page.is_file() and isinstance(end, int):
-            line_count = len(page.read_text(encoding="utf-8-sig", errors="replace").splitlines())
+        page = (task_root / relative).resolve()
+        if not page.is_relative_to(task_root.resolve()):
+            continue
+        if page.is_file() and isinstance(end, int) and isinstance(start, int):
+            lines = page.read_text(encoding="utf-8-sig", errors="replace").splitlines()
+            line_count = len(lines)
             check.require(end <= line_count, f"Evidence row {position} ends at {end}, but {relative} has {line_count} lines")
+            excerpt = "\n".join(lines[start - 1:end])
+            check.require(row.get("source_excerpt") == excerpt, f"Evidence row {position} excerpt differs from cited lines")
+            check.require(row.get("page_sha256") == entry.get("page_sha256"), f"Evidence row {position} page hash differs from cache index")
+            check.require(row.get("content_kind") == entry.get("content_kind"), f"Evidence row {position} content_kind differs from cache index")
+            if entry.get("content_kind") == "summary":
+                check.require(not any(field in row for field in ("quote", "exact_quote", "quote_fragments")),
+                              f"Evidence row {position}: a summary cannot support an original-source quotation")
+            try:
+                validate_quotation(row, excerpt)
+            except ValueError as exc:
+                check.errors.append(f"Evidence row {position}: {exc}")
     return evidence, actual_pages
 
 
@@ -390,6 +420,14 @@ def validate_online_research(
             check.require(isinstance(targeted, list) and set(targeted) <= set(todo_ids), f"Search iteration {position} has invalid todo_ids")
 
     log_rows = load_ndjson(task_root / "cache" / "research_log.ndjson", check, "research log")
+    for row in log_rows:
+        if "capture_path" in row:
+            capture = (task_root / str(row["capture_path"])).resolve()
+            safe = capture.is_relative_to(task_root.resolve())
+            check.require(safe and capture.is_file(), "Recorded search capture is missing or escapes the task")
+            if safe and capture.is_file():
+                check.require(hashlib.sha256(capture.read_bytes()).hexdigest() == row.get("capture_sha256"),
+                              "Recorded search capture hash differs")
     if native_capture:
         native_searches = load_ndjson(
             task_root / "cache" / "native_searches.ndjson",
@@ -465,8 +503,9 @@ def research_check(task_root: Path) -> None:
     check = Validation()
     contract = load_json(task_root / "task_contract.json", check, "task contract")
     decision = load_json(task_root / "route_decision.json", check, "route decision")
-    check.require(isinstance(contract, dict), "task_contract.json must contain an object")
-    check.require(isinstance(decision, dict), "route_decision.json must contain an object")
+    contract_check(task_root, contract, decision, check)
+    if check.errors:
+        check.finish("research input contract")
     evidence, pages = evidence_check(task_root, check)
     report_path = task_root / "research_report.md"
     try:
@@ -487,7 +526,7 @@ def research_check(task_root: Path) -> None:
         validate_research_report(task_root, check)
         if decision.get("selected_route") == "online_agent":
             validate_online_research(task_root, contract, evidence, pages, check)
-    check.finish("research evidence and freeze are valid")
+    check.finish("research contract and archived bytes pass engineering checks; review remains unreviewed")
 
 
 def task_check(task_root: Path) -> None:
@@ -504,12 +543,8 @@ def task_check(task_root: Path) -> None:
         check.finish("completed task is internally consistent")
         return
 
-    validate_schema(contract, framework_root / "schemas/task_contract.schema.json", check, "Task contract")
-    validate_schema(decision, framework_root / "schemas/route_decision.schema.json", check, "Route decision")
+    codebook = contract_check(task_root, contract, decision, check)
     validate_schema(report, framework_root / "schemas/final_report.schema.json", check, "Final report")
-    evidence_schema = framework_root / "schemas/evidence_record.schema.json"
-    for position, row in enumerate(evidence, 1):
-        validate_schema(row, evidence_schema, check, f"Evidence row {position}")
 
     check.require(report.get("task_id") == contract.get("task_id"), "Final report task_id differs from contract")
     check.require(report.get("execution_route") == decision.get("selected_route"), "Final report execution_route differs from route decision")
@@ -517,27 +552,10 @@ def task_check(task_root: Path) -> None:
     check.require(isinstance(report.get("final_output"), dict), "final_output must be an object")
     check.require(isinstance(report.get("open_gaps"), list), "open_gaps must be an array")
     if decision.get("selected_route") in {"local_agent", "online_agent"}:
-        check.require(decision.get("coder_mode") == "api", "Agent-route final reports require coder_mode=api")
+        check.require(decision.get("coder_mode") == "api" or decision.get("deliverable") == "structured", "Agent-route structured reports require an explicit structured deliverable or API coder")
         validate_research_report(task_root, check)
 
-    instructions_path = resolve_contract_path(contract.get("instructions_path"), framework_root, task_root)
-    codebook_path = resolve_contract_path(contract.get("codebook_path"), framework_root, task_root)
     output_schema_path = resolve_contract_path(contract.get("output_schema_path"), framework_root, task_root)
-    check.require(instructions_path.is_file(), f"Combined instruction file does not exist: {instructions_path}")
-    codebook = load_json(codebook_path, check, "codebook") if codebook_path.is_file() else None
-    check.require(isinstance(codebook, dict), f"Codebook does not contain an object: {codebook_path}")
-    if instructions_path.is_file() and isinstance(codebook, dict):
-        try:
-            embedded_codebook = extract_codebook(
-                instructions_path.read_text(encoding="utf-8-sig")
-            )
-        except ValueError as exc:
-            check.errors.append(f"Invalid combined instruction contract: {exc}")
-        else:
-            check.require(
-                embedded_codebook == codebook,
-                "Contract codebook mirror differs from the object embedded in instruction.md",
-            )
     if output_schema_path.is_file():
         candidate = report if output_schema_path.name == "final_report.schema.json" else report.get("final_output")
         validate_schema(candidate, output_schema_path, check, "Contract output")
@@ -568,6 +586,53 @@ def main() -> None:
         research_check(Path(args.task_root).expanduser().resolve())
     else:
         task_check(Path(args.task_root).expanduser().resolve())
+
+
+
+
+
+def contract_check(task_root: Path, contract: Any, decision: Any, check: Validation) -> dict[str, Any] | None:
+    """Apply the same input contract checks to every terminal deliverable."""
+    root = Path(__file__).resolve().parent
+    if not isinstance(contract, dict) or not isinstance(decision, dict):
+        check.errors.append("Task contract and route decision must contain objects")
+        return None
+    validate_schema(contract, root / "schemas/task_contract.schema.json", check, "Task contract")
+    validate_schema(decision, root / "schemas/route_decision.schema.json", check, "Route decision")
+    if check.errors:
+        return None
+    check.require(contract.get("task_id") == decision.get("task_id"), "Route decision task_id differs from contract")
+    framework = load_json(root / "framework.json", check, "framework configuration")
+    try:
+        expected = route_contract(contract, framework)
+        if decision.get("workflow_prompt") == CODEX_NATIVE_WORKFLOW and expected.get("selected_route") == "online_agent":
+            expected["workflow_prompt"] = CODEX_NATIVE_WORKFLOW
+        for field in ("selected_route", "workflow_prompt", "coder_mode", "deliverable", "recommended_budgets"):
+            check.require(expected.get(field) == decision.get(field), f"Route decision disagrees with resolved contract: {field}")
+    except (TypeError, ValueError, AttributeError) as exc:
+        check.errors.append(f"Cannot resolve route: {exc}")
+    paths = {field: resolve_contract_path(contract.get(field), root, task_root)
+             for field in ("instructions_path", "codebook_path", "output_schema_path")}
+    for field, path in paths.items():
+        check.require(path.is_file(), f"{field} does not name a file: {path}")
+    if not all(path.is_file() for path in paths.values()):
+        return None
+    codebook = load_json(paths["codebook_path"], check, "codebook")
+    check.require(isinstance(codebook, dict), "Codebook must be an object")
+    try:
+        embedded = extract_codebook(paths["instructions_path"].read_text(encoding="utf-8-sig"))
+        check.require(embedded == codebook, "Contract codebook mirror differs from the object embedded in instruction.md")
+    except ValueError as exc:
+        check.errors.append(f"Invalid combined instruction contract: {exc}")
+    identity_path = task_root / "input_identity.json"
+    if identity_path.exists():
+        try:
+            recorded = json.loads(identity_path.read_text(encoding="utf-8"))
+            _, actual = prepare_identity(contract, decision, root, task_root, recorded.get("execution"))
+            check.require(recorded == actual, "Consumed sources, controls, or task contract differ from input_identity.json")
+        except (OSError, ValueError, TypeError, AttributeError) as exc:
+            check.errors.append(f"Cannot verify input identity: {exc}")
+    return codebook if isinstance(codebook, dict) else None
 
 
 if __name__ == "__main__":

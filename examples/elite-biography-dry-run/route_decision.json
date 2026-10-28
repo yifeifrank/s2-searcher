@@ -1,10 +1,11 @@
 {
-  "router_version": "research-router-v5",
+  "router_version": "research-router-v6",
   "task_id": "example_online",
   "selected_route": "online_agent",
   "workflow_prompt": "prompts/workflows/online_agent.md",
   "difficulty_profile": "intensive",
   "coder_mode": "none",
+  "deliverable": "research_report",
   "permission_mode": "workspace-write",
   "factors": {
     "document_scope": "open_web",
@@ -37,4 +38,3 @@
     "max_retries": 2
   }
 }
-

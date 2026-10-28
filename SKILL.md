@@ -125,7 +125,7 @@ For `online_agent`, the standalone task session owns planning, search strategy, 
 
 Default to a generous ceiling of 40 search calls and 3,600 seconds for a standalone research session. These are overridable per task or manifest row and are not consumption targets: finish early when coverage is complete, while leaving enough headroom for difficult cases.
 
-Local and online routes terminate at a validated `research_report.md` and frozen evidence package by default. Do not require or launch a coder agent. Structured coding is optional: `coder_mode=api` allows the launcher to make one Responses-compatible model call over the research report and materialized archived evidence after the research process exits. The default is `coder_mode=none`.
+Local and online routes terminate at a validated `research_report.md` and frozen evidence package by default. A Study task may explicitly set `routing.deliverable=structured` (or manifest `deliverable=structured`) with `coder_mode=none` so the same session also writes and validates `output/final_report.json`; native-search validation remains launcher-owned after capture. Do not require or launch a coder agent. Structured coding is optional: `coder_mode=api` allows the launcher to make one Responses-compatible model call over the research report and materialized archived evidence after the research process exits. The default is `coder_mode=none`.
 
 Read [routing.md](references/routing.md) when explaining or modifying route selection.
 
@@ -183,3 +183,13 @@ Tell the user:
 - how to install the same directory into `$HOME/.claude/skills/` for Claude Code;
 - that a new or reloaded session may be needed before newly generated project agents are visible;
 - which validation and dry-run checks passed.
+
+## Reuse and source integrity
+
+Generated tasks pin input, control and execution identities before launch.
+Resume only unchanged tasks with `--resume`; retain completed byte seals and use
+a new tasks directory when inputs or controls change. Source refreshes preserve
+old cached revisions and citation hashes. Preserve source-text, excerpt and
+summary distinctions, and exact source quotations. Existing copied workspaces
+need an explicit upgrade; installing the skill updates future scaffolds only.
+See the generated-folder README for integrity artifacts and I/O limits.

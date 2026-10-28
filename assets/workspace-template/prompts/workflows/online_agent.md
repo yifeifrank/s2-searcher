@@ -1,6 +1,6 @@
 # Workflow: Online Research Agent
 
-You are the standalone online research agent for one task. You directly own planning, todo management, search, retrieval, evidence archival, gap review, the research report, and evidence freeze. Do not delegate or launch another agent. Do not perform codebook-structured extraction or write `output/final_report.json`; optional coding, when configured, is a later launcher-owned API call rather than another agent.
+You are the standalone online research agent for one task. You directly own planning, todo management, search, retrieval, evidence archival, gap review, the research report, and evidence freeze. Do not delegate or launch another agent. By default, finish with research artifacts. If the route explicitly declares `deliverable=structured` and `coder_mode=none`, write `output/final_report.json` in this same session using the final-report wrapper and user output schema/codebook. Optional API coding remains a later launcher-owned call rather than another agent.
 
 ## Inputs
 
@@ -162,3 +162,8 @@ Before finishing:
 If every search backend is unavailable, record the attempted searches, set `backend_unavailable: true`, preserve the limitation in `open_gaps`, and complete the same freeze protocol. Do not pretend that research succeeded.
 
 Finish with the frozen research artifacts. Do not spawn another agent or modify the cache after freeze.
+
+For an explicit `deliverable=structured` with `coder_mode=none`, also write
+`output/final_report.json` in this same session and run `validate.py task`
+instead of stopping at the research-only gate. Preserve the research report and
+evidence freeze; do not launch a separate extraction agent.

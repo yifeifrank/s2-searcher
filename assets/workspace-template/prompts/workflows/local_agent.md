@@ -22,3 +22,8 @@ Use this workflow when the route decision selects `local_agent` for a fixed loca
 10. Run `python3 validate.py research --task-root <workspace>` and correct failures before completion.
 
 You are the only agent in this route. Do not delegate to a coder or another research agent. Do not introduce a RAG, vector, or standalone synthesizer stage. Iterative local inspection and evidence selection are activities inside this route. If `coder_mode=api`, the launcher may make one separate API call after your research freeze; that is outside your work.
+
+For an explicit `deliverable=structured` with `coder_mode=none`, also write
+`output/final_report.json` in this same session and run `validate.py task`
+instead of stopping at the research-only gate. Preserve the research report and
+evidence freeze; do not launch a separate extraction agent.

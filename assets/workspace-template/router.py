@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 
-ROUTER_VERSION = "research-router-v5"
+ROUTER_VERSION = "research-router-v6"
 ROUTES = {"direct_api", "local_agent", "online_agent"}
 
 
@@ -76,7 +76,8 @@ def _route(contract: dict[str, Any], default_route: str) -> tuple[str, bool, lis
     if external is True or scope == "open_web":
         why = "external search is required" if external is True else "document scope is open_web"
         return "online_agent", False, [f"Selected online_agent because {why}."]
-    if not documents and external is not False:
+    inline = bool(str(task_input.get("inline_text", "")).strip())
+    if not documents and not inline and scope not in {"inline", "fixed_collection", "single_document"} and external is not False:
         return "online_agent", False, [
             "Selected online_agent because no local documents were supplied and external search was not prohibited."
         ]
@@ -132,7 +133,7 @@ def route_contract(contract: dict[str, Any], framework: dict[str, Any] | None = 
         recommended_budgets["max_search_calls"] = 0
 
     configured_permission = str(
-        framework.get("permissions", {}).get("codex_sandbox_mode", "danger-full-access")
+        framework.get("permissions", {}).get("codex_sandbox_mode", "workspace-write")
     )
     permission_mode = "none" if selected_route == "direct_api" else configured_permission
     requested_coder_mode = routing.get("coder_mode")
@@ -149,8 +150,18 @@ def route_contract(contract: dict[str, Any], framework: dict[str, Any] | None = 
         reasons.append("No post-research coder is needed because direct_api performs the coding call itself.")
     elif coder_mode == "api":
         reasons.append("One optional post-freeze API coding call was requested.")
-    else:
+    elif routing.get("deliverable") != "structured":
         reasons.append("No post-research coder is enabled; research artifacts are the terminal deliverable.")
+
+    deliverable = str(routing.get("deliverable") or (
+        "structured" if selected_route == "direct_api" or coder_mode == "api" else "research_report"
+    ))
+    if deliverable not in {"research_report", "structured"}:
+        raise ValueError(f"Unsupported deliverable: {deliverable}")
+    if deliverable != "structured" and (selected_route == "direct_api" or coder_mode == "api"):
+        raise ValueError("direct_api and coder_mode=api require deliverable=structured")
+    if deliverable == "structured" and selected_route != "direct_api" and coder_mode == "none":
+        reasons.append("The same standalone session writes and validates the structured result.")
 
     return {
         "router_version": ROUTER_VERSION,
@@ -159,6 +170,7 @@ def route_contract(contract: dict[str, Any], framework: dict[str, Any] | None = 
         "workflow_prompt": workflow_prompt,
         "difficulty_profile": profile,
         "coder_mode": coder_mode,
+        "deliverable": deliverable,
         "permission_mode": permission_mode,
         "factors": {
             "document_scope": task_input.get("document_scope", "auto"),
